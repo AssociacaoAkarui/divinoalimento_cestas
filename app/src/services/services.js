@@ -810,6 +810,74 @@ class OfertaService {
   }
 }
 
+class PedidoConsumidoresService {
+  async criarPedidoConsumidor(dados) {
+    try {
+      const { PedidoConsumidores, Ciclo, Usuario } = require("../../models");
+
+      const allowedFields = ["cicloId", "usuarioId", "status", "observacao"];
+      const dadosNormalizados = normalizePayload(PedidoConsumidores, dados);
+      const payloadSeguro = filterPayload(
+        PedidoConsumidores,
+        dadosNormalizados,
+        allowedFields,
+      );
+
+      if (payloadSeguro.cicloId) {
+        const ciclo = await Ciclo.findByPk(payloadSeguro.cicloId);
+        if (!ciclo) {
+          throw new ServiceError(
+            `Ciclo com ID ${payloadSeguro.cicloId} não encontrado`,
+          );
+        }
+      }
+
+      if (payloadSeguro.usuarioId) {
+        const usuario = await Usuario.findByPk(payloadSeguro.usuarioId);
+        if (!usuario) {
+          throw new ServiceError(
+            `Usuário com ID ${payloadSeguro.usuarioId} não encontrado`,
+          );
+        }
+      }
+
+      return await PedidoConsumidores.create(payloadSeguro);
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao criar pedido de consumidor.", {
+        cause: error,
+      });
+    }
+  }
+
+  async buscarOuCriarPedidoConsumidor(cicloId, usuarioId) {
+    try {
+      const { PedidoConsumidores } = require("../../models");
+
+      if (!cicloId || !usuarioId) {
+        throw new ServiceError("Ciclo ID e Usuário ID são obrigatórios.");
+      }
+
+      const [pedido] = await PedidoConsumidores.findOrCreate({
+        where: {
+          cicloId: cicloId,
+          usuarioId: usuarioId,
+        },
+        defaults: {
+          status: "ativo",
+        },
+      });
+
+      return pedido;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao buscar ou criar pedido de consumidor.", {
+        cause: error,
+      });
+    }
+  }
+}
+
 module.exports = {
   CicloService,
   ProdutoService,
@@ -817,4 +885,5 @@ module.exports = {
   ComposicaoService,
   PontoEntregaService,
   OfertaService,
+  PedidoConsumidoresService,
 };

@@ -78,10 +78,23 @@ class UsuarioFactory {
   }
 }
 
+class PedidoConsumidoresFactory {
+  static create(override = {}) {
+    return {
+      cicloId: null,
+      usuarioId: null,
+      status: "ativo",
+      observacao: "",
+      ...override,
+    };
+  }
+}
+
 module.exports = {
   CestaFactory,
   PontoEntregaFactory,
   CicloFactory,
   ProdutoFactory,
   UsuarioFactory,
+  PedidoConsumidoresFactory,
 };

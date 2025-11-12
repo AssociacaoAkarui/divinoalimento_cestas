@@ -37,6 +37,7 @@ Given("que existe um ciclo ativo", async function () {
     status: "oferta",
   });
   cicloAtivo = await cicloService.criarCiclo(cicloData);
+  this.cicloAtivo = cicloAtivo;
   const cestaData = Factories.CestaFactory.create({ nome: "Cesta Básica" });
   cestaDaComposicao = await cestaService.criarCesta(cestaData);
 });

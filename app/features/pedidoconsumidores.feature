@@ -1,7 +1,7 @@
 # language: pt
 Funcionalidade: Gestão de Pedidos de Consumidores
 
-  @pedidoconsumidores @PDC-01 @pending
+  @pedidoconsumidores @PDC-01
   Cenário: Criar um novo pedido de consumidor com sucesso
     Dado que existe um ciclo ativo
     E que existe um usuário consumidor cadastrado
@@ -58,3 +58,12 @@ Funcionalidade: Gestão de Pedidos de Consumidores
     Dado que existem múltiplos pedidos em um ciclo
     Quando eu solicito todos os pedidos do ciclo
     Então eu devo ver todos os pedidos associados ao ciclo
+
+  @pedidoconsumidores @PDC-09
+  Cenário: Buscar ou criar pedido de consumidor
+    Dado que existe um ciclo ativo
+    E que existe um usuário consumidor cadastrado
+    Quando eu busco ou crio um pedido para o consumidor no ciclo
+    Então o pedido deve existir no sistema
+    Quando eu busco ou crio novamente o mesmo pedido
+    Então deve retornar o pedido existente sem duplicar

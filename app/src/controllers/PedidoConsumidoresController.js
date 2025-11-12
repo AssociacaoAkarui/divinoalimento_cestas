@@ -1,109 +1,107 @@
-const Composicao = require('../model/Composicao')
-const Ciclo = require('../model/Ciclo')
-const Produto = require('../model/Produto')
-const Usuario = require('../model/Usuario')
-const Oferta = require('../model/Oferta')
-const PedidoConsumidores = require('../model/PedidoConsumidores')
-const Movimentacao = require('../model/Movimentacao')
-const Profile = require('../model/Profile')
-
+const Composicao = require("../model/Composicao");
+const Ciclo = require("../model/Ciclo");
+const Produto = require("../model/Produto");
+const Usuario = require("../model/Usuario");
+const Oferta = require("../model/Oferta");
+const PedidoConsumidores = require("../model/PedidoConsumidores");
+const Movimentacao = require("../model/Movimentacao");
+const Profile = require("../model/Profile");
+const { PedidoConsumidoresService } = require("../services/services");
+const ServiceError = require("../utils/ServiceError");
 
 module.exports = {
+  async showCreateEdit(req, res) {
+    const cicloId = req.params.id;
 
-    async showCreateEdit(req, res) {
-        const cicloId = req.params.id
+    // USUARIO V010921
+    usuarioAtivo = [];
+    loginStatus = "";
+    user = req.oidc.user;
+    if (user) {
+      // Já é usuário cadastrado na base do sistema
 
-        // USUARIO V010921
-        usuarioAtivo = []
-        loginStatus = ""
-        user = req.oidc.user
-        if (user) {
-            
-            // Já é usuário cadastrado na base do sistema
+      usuarioCadastrado = await Usuario.retornaUsuarioCadastrado(user.email);
 
-            usuarioCadastrado = await Usuario.retornaUsuarioCadastrado(user.email)
+      if (usuarioCadastrado != 0) {
+        console.log("LOG: usuario cadastrado encontrado:", usuarioCadastrado);
 
-            if (usuarioCadastrado != 0) {
+        usuarioAtivo.push({
+          email: user.email,
+          picture: user.picture,
+          name: user.name,
+          email_verified: user.email_verified,
+          id: usuarioCadastrado.id,
+          perfil: usuarioCadastrado.perfil,
+        });
 
-                console.log('LOG: usuario cadastrado encontrado:', usuarioCadastrado)
+        loginStatus = "usuarioAtivo";
+      } else {
+        usuarioAtivo.push({
+          email: user.email,
+          picture: user.picture,
+          name: user.name,
+          email_verified: user.email_verified,
+        });
 
-                usuarioAtivo.push({
-                    email: user.email,
-                    picture: user.picture,
-                    name: user.name,
-                    email_verified: user.email_verified,
-                    id: usuarioCadastrado.id,
-                    perfil: usuarioCadastrado.perfil       
-                })
+        return res.render("usuarionovo", { usuarioAtivo: usuarioAtivo[0] });
+      }
+    }
+    // USUARIO FIM
 
-                loginStatus = 'usuarioAtivo'
+    // quando não informado mostra tela de pedidos do usuário corrente
+    let usuarioId = usuarioCadastrado.id;
+    console.log("usuarioId", usuarioId);
 
-            }
-            else {
+    if (req.query.usr) {
+      usuarioId = req.query.usr;
+    }
 
-                usuarioAtivo.push({
-                    email: user.email,
-                    picture: user.picture,
-                    name: user.name,
-                    email_verified: user.email_verified
-                })
-                
-                return res.render('usuarionovo',{usuarioAtivo: usuarioAtivo[0]})
-     
-            }  
+    let usuarios = [];
+    try {
+      // to-do: trazer apensas usuários que podem ser geridos por usuário corrente
+      usuarios = await Usuario.get();
+    } catch (error) {
+      //console.log('OfertaController error - falha Usuario.get')
+    }
 
-        }
-        // USUARIO FIM
+    usuarios.sort((a, b) =>
+      a.nome.toLowerCase() > b.nome.toLowerCase()
+        ? 1
+        : b.nome.toLowerCase() > a.nome.toLowerCase()
+          ? -1
+          : 0,
+    );
 
+    const usuarioConsumidor = usuarios.find(
+      (usuario) => Number(usuario.id) === Number(usuarioId),
+    );
 
-        
-        // quando não informado mostra tela de pedidos do usuário corrente
-        let usuarioId = usuarioCadastrado.id
-        console.log("usuarioId",usuarioId)
+    const pedidoConsumidoresService = new PedidoConsumidoresService();
+    try {
+      const pedidoConsumidor =
+        await pedidoConsumidoresService.buscarOuCriarPedidoConsumidor(
+          cicloId,
+          usuarioId,
+        );
+      pedidoConsumidorId = pedidoConsumidor.id;
+    } catch (error) {
+      console.error("Erro ao buscar ou criar pedido:", error);
+      return res.send("Ciclo e/ou Usuário não existem!");
+    }
 
-        if (req.query.usr) {
-            usuarioId = req.query.usr
-        }
+    const produtos = await Produto.get();
 
-        let usuarios = []
-        try {
-            // to-do: trazer apensas usuários que podem ser geridos por usuário corrente
-            usuarios = await Usuario.get()
-        } catch (error) {
-            //console.log('OfertaController error - falha Usuario.get')
-        }
+    const dadosCiclo = await Ciclo.getCicloId(cicloId);
+    ciclo = dadosCiclo.ciclo[0];
 
-        usuarios.sort((a,b) => (a.nome.toLowerCase() > b.nome.toLowerCase()) ? 1 : ((b.nome.toLowerCase() > a.nome.toLowerCase()) ? -1 : 0))
-        
+    const cicloComposicoes = dadosCiclo.cicloComposicoes;
+    console.log("cicloComposicoes", cicloComposicoes);
 
-        const usuarioConsumidor = usuarios.find(usuario => Number(usuario.id) === Number(usuarioId)) 
-        
+    // erro quando cesta GrupoCompras não existe, código me parece desnecessário
+    /*composicaoGrupoCompras = cicloComposicoes.find(cicloComposicao => Number(cicloComposicao.cestaId) == 3)
 
-        pedidoConsumidorId = await PedidoConsumidores.findOrCreatePedidoConsumidor({
-            cicloId: cicloId,
-            usuarioId: usuarioId
-        })
-
-        if (pedidoConsumidorId == 'error') {
-
-            return res.send('Ciclo e/ou Usuário não existem!')
-
-        }  
-
-       const produtos = await Produto.get();
-
-
-        const dadosCiclo = await Ciclo.getCicloId(cicloId)
-        ciclo = dadosCiclo.ciclo[0]
-
-        const cicloComposicoes = dadosCiclo.cicloComposicoes
-        console.log('cicloComposicoes',cicloComposicoes)
-
-       // erro quando cesta GrupoCompras não existe, código me parece desnecessário
-        /*composicaoGrupoCompras = cicloComposicoes.find(cicloComposicao => Number(cicloComposicao.cestaId) == 3)
-        
         if (!composicaoGrupoCompras) {
-            composicaoGrupoCompras = cicloComposicoes.find(cicloComposicao => Number(cicloComposicao.cestaId) == 7) 
+            composicaoGrupoCompras = cicloComposicoes.find(cicloComposicao => Number(cicloComposicao.cestaId) == 7)
         }
         console.log('composicaoGrupoCompras',composicaoGrupoCompras)
 
@@ -115,7 +113,7 @@ module.exports = {
 
         produtosComposicao.sort((a,b) => (a['ofertaProduto.produtoId'] > b['ofertaProduto.produtoId']) ? 1 : ((b['ofertaProduto.produtoId'] > a['ofertaProduto.produtoId']) ? -1 : 0))
 
-        
+
         let produtosComposicaoDados = []
         let prodCompCorrente = 0
 
@@ -126,11 +124,11 @@ module.exports = {
         }
         let quantidadeProdutoComposicaoDados = 0
         produtosComposicao.forEach(produtoComposicao => {
-            
+
             if (Number(produtoComposicao['ofertaProduto.produtoId']) > 0) {
 
                 if (prodCompCorrente == (produtoComposicao['ofertaProduto.produtoId'])) {
-           
+
                     quantidadeProdutoComposicaoDados = quantidadeProdutoComposicaoDados + Number(produtoComposicao.quantidade)
 
                 }
@@ -161,322 +159,346 @@ module.exports = {
 
         console.log('produtosComposicaoDados',produtosComposicaoDados)*/
 
-        
-        // array para busca da quantidade por produto para calculo de itens pedidos
-        /*let arrayComposicoes = []
+    // array para busca da quantidade por produto para calculo de itens pedidos
+    /*let arrayComposicoes = []
         cicloComposicoes.forEach(cicloComposicao => {
             arrayComposicoes.push(cicloComposicao.id)
         });*/
-        
-        /*produtosComposicao = await Composicao.getProdutosPorCicloComposicao({
+
+    /*produtosComposicao = await Composicao.getProdutosPorCicloComposicao({
                                 composicaoId: composicao.id
                         })*/
-        
-    
-        // Busca produtosOfertaDados
-        
-        const ofertas = await Oferta.getOfertasPorCiclo({
-            cicloId: cicloId
-        })
 
-        let cicloProdutosOfertados = []
+    // Busca produtosOfertaDados
 
-        for (let index = 0; index < ofertas.length; index++) {
-            const oferta = ofertas[index];
-            produtosOferta = await Oferta.getProdutosPorOferta({
-                ofertaId: oferta.id
-            })
-            produtosOferta.forEach(produtoOferta => {
-              cicloProdutosOfertados.push({
-                  id: produtoOferta.id,
-                  quantidade:produtoOferta.quantidade,
-                  produtoId: produtoOferta.produtoId,
-                  usuarioId: oferta.usuarioId
-              })
+    const ofertas = await Oferta.getOfertasPorCiclo({
+      cicloId: cicloId,
+    });
 
-            });
-        } 
-        
-        cicloProdutosOfertados.sort((a,b) => (a.produtoId > b.produtoId) ? 1 : ((b.produtoId > a.produtoId) ? -1 : 0))
+    let cicloProdutosOfertados = [];
 
-        let cicloOfertaProdutosDados = []
-        let produtosPedidos = []
+    for (let index = 0; index < ofertas.length; index++) {
+      const oferta = ofertas[index];
+      produtosOferta = await Oferta.getProdutosPorOferta({
+        ofertaId: oferta.id,
+      });
+      produtosOferta.forEach((produtoOferta) => {
+        cicloProdutosOfertados.push({
+          id: produtoOferta.id,
+          quantidade: produtoOferta.quantidade,
+          produtoId: produtoOferta.produtoId,
+          usuarioId: oferta.usuarioId,
+        });
+      });
+    }
 
-        let produtoCorrente = {
-            id: 0,
-            nome: "",
-            medida: "",
-            quantidadeDisponivel: 0,
-            quantidadePedido: 0,
-            fornecedores: "vazio"
+    cicloProdutosOfertados.sort((a, b) =>
+      a.produtoId > b.produtoId ? 1 : b.produtoId > a.produtoId ? -1 : 0,
+    );
+
+    let cicloOfertaProdutosDados = [];
+    let produtosPedidos = [];
+
+    let produtoCorrente = {
+      id: 0,
+      nome: "",
+      medida: "",
+      quantidadeDisponivel: 0,
+      quantidadePedido: 0,
+      fornecedores: "vazio",
+    };
+
+    let quantidadeDisp = 0;
+    let quantPedidoConsumidor = 0;
+    let statusPedido = "";
+
+    for (let index = 0; index < cicloProdutosOfertados.length; index++) {
+      const cicloOfertaProduto = cicloProdutosOfertados[index];
+
+      produtoDados = produtos.find(
+        (produto) =>
+          Number(produto.id) === Number(cicloOfertaProduto.produtoId),
+      );
+      usuarioDados = usuarios.find(
+        (usuario) =>
+          Number(usuario.id) === Number(cicloOfertaProduto.usuarioId),
+      );
+
+      pedidoConsumidor = await PedidoConsumidores.getPedidoConsumidor({
+        cicloId: cicloId,
+        usuarioId: usuarioId,
+        produtoId: cicloOfertaProduto.produtoId,
+      });
+
+      quantPedidoConsumidor = pedidoConsumidor.quantPedido;
+      statusPedido = pedidoConsumidor.status;
+
+      if (produtoCorrente.id == 0 || produtoDados.id == produtoCorrente.id) {
+        produtoCorrente.id = produtoDados.id;
+        produtoCorrente.nome = produtoDados.nome;
+        produtoCorrente.medida = produtoDados.medida;
+        produtoCorrente.valorReferencia = produtoDados.valorReferencia;
+        produtoCorrente.quantidadeDisponivel =
+          produtoCorrente.quantidadeDisponivel + cicloOfertaProduto.quantidade;
+        produtoCorrente.quantidadePedido = quantPedidoConsumidor;
+
+        if (cicloOfertaProduto.quantidade) {
+          if (produtoCorrente.fornecedores == "vazio") {
+            produtoCorrente.fornecedores =
+              usuarioDados.nome +
+              ":" +
+              cicloOfertaProduto.quantidade.toString();
+          } else {
+            produtoCorrente.fornecedores =
+              produtoCorrente.fornecedores + " | " + usuarioDados.nome;
+          }
         }
-
-        let quantidadeDisp = 0
-        let quantPedidoConsumidor = 0
-        let statusPedido = ''
-
-        for (let index = 0; index < cicloProdutosOfertados.length; index++) {
-            const cicloOfertaProduto = cicloProdutosOfertados[index]
-            
-            produtoDados = produtos.find(produto => Number(produto.id) === Number(cicloOfertaProduto.produtoId))
-            usuarioDados = usuarios.find(usuario => Number(usuario.id) === Number(cicloOfertaProduto.usuarioId))
-
-            pedidoConsumidor = await PedidoConsumidores.getPedidoConsumidor({
-                cicloId: cicloId,
-                usuarioId: usuarioId,
-                produtoId: cicloOfertaProduto.produtoId
-            })
-
-            quantPedidoConsumidor = pedidoConsumidor.quantPedido
-            statusPedido = pedidoConsumidor.status
-
-            if ((produtoCorrente.id == 0) || (produtoDados.id == produtoCorrente.id)) {
-                produtoCorrente.id = produtoDados.id
-                produtoCorrente.nome = produtoDados.nome
-                produtoCorrente.medida = produtoDados.medida
-                produtoCorrente.valorReferencia = produtoDados.valorReferencia
-                produtoCorrente.quantidadeDisponivel = produtoCorrente.quantidadeDisponivel + cicloOfertaProduto.quantidade
-                produtoCorrente.quantidadePedido = quantPedidoConsumidor
-
-                if (cicloOfertaProduto.quantidade) {
-                    if (produtoCorrente.fornecedores == "vazio") {
-                        produtoCorrente.fornecedores = usuarioDados.nome + ':' + cicloOfertaProduto.quantidade.toString()
-                    } else {
-                        produtoCorrente.fornecedores = produtoCorrente.fornecedores + ' | ' + usuarioDados.nome
-                    }  
-                }
-            }
-            else {
-
-                quantidadeProdutoComposicao = await Composicao.getTotalProdutosPedidosComposicaoItensAdicionais({
-                    usuarioId: usuarioId,
-                    cicloId: cicloId,
-                    produtoId: produtoCorrente.id
-                })
-
-                if (quantidadeProdutoComposicao > 0) {
-                    quantidadeDisp = quantidadeProdutoComposicao
-                } else {
-                    quantidadeDisp = 0
-                } 
-
-                quantidadeProdutoPedidoConsumidores = await PedidoConsumidores.getQuantidadeProdutoPedidoPorConsumidores({
-                    cicloId: cicloId,
-                    produtoId: produtoCorrente.id
-                })
-
-                quantidadeDisp = quantidadeDisp - quantidadeProdutoPedidoConsumidores + produtoCorrente.quantidadePedido
-
-
-                if (produtoCorrente.quantidadePedido > 0) {
-                    produtosPedidos.push ({
-                        id: produtoCorrente.id,
-                        nome: produtoCorrente.nome,
-                        medida: produtoCorrente.medida,
-                        //TO-DO: alterar para valor real quando ok na base
-                        valorReferencia: produtoCorrente.valorReferencia,
-                        quantidadeDisponivel: quantidadeDisp,
-                        quantidade: produtoCorrente.quantidadePedido,
-                        fornecedores: produtoCorrente.fornecedores
-                    })
-                }
-
-                if (quantidadeDisp > 0) {
-                    cicloOfertaProdutosDados.push ({
-                        id: produtoCorrente.id,
-                        nome: produtoCorrente.nome,
-                        medida: produtoCorrente.medida,
-                        //TO-DO: alterar para valor real quando ok na base
-                        valorReferencia: produtoCorrente.valorReferencia,
-                        quantidadeDisponivel: quantidadeDisp,
-                        quantidade: produtoCorrente.quantidadePedido,
-                        fornecedores: produtoCorrente.fornecedores
-                    })
-                }
-
-                produtoCorrente.id = produtoDados.id
-                produtoCorrente.nome = produtoDados.nome
-                produtoCorrente.medida = produtoDados.medida
-                produtoCorrente.valorReferencia = produtoDados.valorReferencia
-                produtoCorrente.quantidadeDisponivel = cicloOfertaProduto.quantidade
-                produtoCorrente.quantidadePedido = quantPedidoConsumidor
-                produtoCorrente.fornecedores = usuarioDados.nome
-            }
-        };
-
-        quantidadeProdutoComposicao = await Composicao.getTotalProdutosPedidosComposicaoItensAdicionais({
+      } else {
+        quantidadeProdutoComposicao =
+          await Composicao.getTotalProdutosPedidosComposicaoItensAdicionais({
             usuarioId: usuarioId,
             cicloId: cicloId,
-            produtoId: produtoCorrente.id
-        })
+            produtoId: produtoCorrente.id,
+          });
 
         if (quantidadeProdutoComposicao > 0) {
-            quantidadeDisp = quantidadeProdutoComposicao
+          quantidadeDisp = quantidadeProdutoComposicao;
         } else {
-            quantidadeDisp = 0
-        }  
+          quantidadeDisp = 0;
+        }
 
-        quantidadeProdutoPedidoConsumidores = await PedidoConsumidores.getQuantidadeProdutoPedidoPorConsumidores({
+        quantidadeProdutoPedidoConsumidores =
+          await PedidoConsumidores.getQuantidadeProdutoPedidoPorConsumidores({
             cicloId: cicloId,
-            produtoId: produtoCorrente.id
-        })
+            produtoId: produtoCorrente.id,
+          });
 
-        quantidadeDisp = quantidadeDisp - quantidadeProdutoPedidoConsumidores + produtoCorrente.quantidadePedido
-
+        quantidadeDisp =
+          quantidadeDisp -
+          quantidadeProdutoPedidoConsumidores +
+          produtoCorrente.quantidadePedido;
 
         if (produtoCorrente.quantidadePedido > 0) {
-            produtosPedidos.push ({
-                id: produtoCorrente.id,
-                nome: produtoCorrente.nome,
-                medida: produtoCorrente.medida,
-                //TO-DO: alterar para valor real quando ok na base
-                valorReferencia: produtoCorrente.valorReferencia,
-                quantidadeDisponivel: quantidadeDisp,
-                quantidade: produtoCorrente.quantidadePedido,
-                fornecedores: produtoCorrente.fornecedores
-            })
+          produtosPedidos.push({
+            id: produtoCorrente.id,
+            nome: produtoCorrente.nome,
+            medida: produtoCorrente.medida,
+            //TO-DO: alterar para valor real quando ok na base
+            valorReferencia: produtoCorrente.valorReferencia,
+            quantidadeDisponivel: quantidadeDisp,
+            quantidade: produtoCorrente.quantidadePedido,
+            fornecedores: produtoCorrente.fornecedores,
+          });
         }
-        
+
         if (quantidadeDisp > 0) {
-            cicloOfertaProdutosDados.push ({
-                id: produtoCorrente.id,
-                nome: produtoCorrente.nome,
-                medida: produtoCorrente.medida,
-                //TO-DO: alterar para valor real quando ok na base
-                valorReferencia: produtoCorrente.valorReferencia,
-                quantidadeDisponivel: quantidadeDisp,
-                quantidade: produtoCorrente.quantidadePedido,
-                fornecedores: produtoCorrente.fornecedores
-            })
+          cicloOfertaProdutosDados.push({
+            id: produtoCorrente.id,
+            nome: produtoCorrente.nome,
+            medida: produtoCorrente.medida,
+            //TO-DO: alterar para valor real quando ok na base
+            valorReferencia: produtoCorrente.valorReferencia,
+            quantidadeDisponivel: quantidadeDisp,
+            quantidade: produtoCorrente.quantidadePedido,
+            fornecedores: produtoCorrente.fornecedores,
+          });
         }
 
+        produtoCorrente.id = produtoDados.id;
+        produtoCorrente.nome = produtoDados.nome;
+        produtoCorrente.medida = produtoDados.medida;
+        produtoCorrente.valorReferencia = produtoDados.valorReferencia;
+        produtoCorrente.quantidadeDisponivel = cicloOfertaProduto.quantidade;
+        produtoCorrente.quantidadePedido = quantPedidoConsumidor;
+        produtoCorrente.fornecedores = usuarioDados.nome;
+      }
+    }
 
-        //cicloOfertaProdutosDados.sort()
-        cicloOfertaProdutosDados.sort((a,b) => (a.nome.toLowerCase() > b.nome.toLowerCase()) ? 1 : ((b.nome.toLowerCase() > a.nome.toLowerCase()) ? -1 : 0))
-        // FIM Busca produtosOfertaDados
+    quantidadeProdutoComposicao =
+      await Composicao.getTotalProdutosPedidosComposicaoItensAdicionais({
+        usuarioId: usuarioId,
+        cicloId: cicloId,
+        produtoId: produtoCorrente.id,
+      });
 
-        produtosPedidos.sort((a,b) => (a.nome > b.nome) ? 1 : ((b.nome > a.nome) ? -1 : 0))
-        
-        //produtosComposicaoDados.sort((a,b) => (a.nome > b.nome) ? 1 : ((b.nome > a.nome) ? -1 : 0))
-        
+    if (quantidadeProdutoComposicao > 0) {
+      quantidadeDisp = quantidadeProdutoComposicao;
+    } else {
+      quantidadeDisp = 0;
+    }
 
-        produtosPedidosConsumidorDados = cicloOfertaProdutosDados
+    quantidadeProdutoPedidoConsumidores =
+      await PedidoConsumidores.getQuantidadeProdutoPedidoPorConsumidores({
+        cicloId: cicloId,
+        produtoId: produtoCorrente.id,
+      });
 
-        //const { _raw, _json, ...userProfile } = req.user;
-        //userDados = req.user;
-        //userProfile = JSON.stringify(userProfile, null, 2)
-        //console.log("userDados:",userDados)
+    quantidadeDisp =
+      quantidadeDisp -
+      quantidadeProdutoPedidoConsumidores +
+      produtoCorrente.quantidadePedido;
 
+    if (produtoCorrente.quantidadePedido > 0) {
+      produtosPedidos.push({
+        id: produtoCorrente.id,
+        nome: produtoCorrente.nome,
+        medida: produtoCorrente.medida,
+        //TO-DO: alterar para valor real quando ok na base
+        valorReferencia: produtoCorrente.valorReferencia,
+        quantidadeDisponivel: quantidadeDisp,
+        quantidade: produtoCorrente.quantidadePedido,
+        fornecedores: produtoCorrente.fornecedores,
+      });
+    }
 
-        if (loginStatus == 'usuarioAtivo') {
-            if ((usuarioAtivo[0].perfil.indexOf('admin') >= 0 ) || (usuarioAtivo[0].perfil.indexOf('consumidor') >= 0 ) ) {
-                //return res.render('pedidoConsumidores',{ usuarioAtivo: usuarioAtivo[0], produtosComposicaoDados: produtosComposicaoDados,statusPedido: statusPedido, produtosPedidos:produtosPedidos, produtosPedidosConsumidorDados: produtosPedidosConsumidorDados, usuarioConsumidor: usuarioConsumidor, pedidoConsumidorId: pedidoConsumidorId, ciclo: ciclo, usuarios: usuarios})
-                return res.render('pedidoConsumidores',{ usuarioAtivo: usuarioAtivo[0], statusPedido: statusPedido, produtosPedidos:produtosPedidos, produtosPedidosConsumidorDados: produtosPedidosConsumidorDados, usuarioConsumidor: usuarioConsumidor, pedidoConsumidorId: pedidoConsumidorId, ciclo: ciclo, usuarios: usuarios})
-            
-            }
-            else {
-                return res.redirect('/')
-            }
-        }
+    if (quantidadeDisp > 0) {
+      cicloOfertaProdutosDados.push({
+        id: produtoCorrente.id,
+        nome: produtoCorrente.nome,
+        medida: produtoCorrente.medida,
+        //TO-DO: alterar para valor real quando ok na base
+        valorReferencia: produtoCorrente.valorReferencia,
+        quantidadeDisponivel: quantidadeDisp,
+        quantidade: produtoCorrente.quantidadePedido,
+        fornecedores: produtoCorrente.fornecedores,
+      });
+    }
 
-    },
+    //cicloOfertaProdutosDados.sort()
+    cicloOfertaProdutosDados.sort((a, b) =>
+      a.nome.toLowerCase() > b.nome.toLowerCase()
+        ? 1
+        : b.nome.toLowerCase() > a.nome.toLowerCase()
+          ? -1
+          : 0,
+    );
+    // FIM Busca produtosOfertaDados
 
+    produtosPedidos.sort((a, b) =>
+      a.nome > b.nome ? 1 : b.nome > a.nome ? -1 : 0,
+    );
 
-    async showConfirmacao(req, res) {
-        const cicloId = req.params.id
+    //produtosComposicaoDados.sort((a,b) => (a.nome > b.nome) ? 1 : ((b.nome > a.nome) ? -1 : 0))
 
-        // USUARIO V010921
-        usuarioAtivo = []
-        loginStatus = ""
-        user = req.oidc.user
-        if (user) {
-            
-            // Já é usuário cadastrado na base do sistema
+    produtosPedidosConsumidorDados = cicloOfertaProdutosDados;
 
-            usuarioCadastrado = await Usuario.retornaUsuarioCadastrado(user.email)
+    //const { _raw, _json, ...userProfile } = req.user;
+    //userDados = req.user;
+    //userProfile = JSON.stringify(userProfile, null, 2)
+    //console.log("userDados:",userDados)
 
-            if (usuarioCadastrado != 0) {
+    if (loginStatus == "usuarioAtivo") {
+      if (
+        usuarioAtivo[0].perfil.indexOf("admin") >= 0 ||
+        usuarioAtivo[0].perfil.indexOf("consumidor") >= 0
+      ) {
+        //return res.render('pedidoConsumidores',{ usuarioAtivo: usuarioAtivo[0], produtosComposicaoDados: produtosComposicaoDados,statusPedido: statusPedido, produtosPedidos:produtosPedidos, produtosPedidosConsumidorDados: produtosPedidosConsumidorDados, usuarioConsumidor: usuarioConsumidor, pedidoConsumidorId: pedidoConsumidorId, ciclo: ciclo, usuarios: usuarios})
+        return res.render("pedidoConsumidores", {
+          usuarioAtivo: usuarioAtivo[0],
+          statusPedido: statusPedido,
+          produtosPedidos: produtosPedidos,
+          produtosPedidosConsumidorDados: produtosPedidosConsumidorDados,
+          usuarioConsumidor: usuarioConsumidor,
+          pedidoConsumidorId: pedidoConsumidorId,
+          ciclo: ciclo,
+          usuarios: usuarios,
+        });
+      } else {
+        return res.redirect("/");
+      }
+    }
+  },
 
-                console.log('LOG: usuario cadastrado encontrado:', usuarioCadastrado)
+  async showConfirmacao(req, res) {
+    const cicloId = req.params.id;
 
-                usuarioAtivo.push({
-                    email: user.email,
-                    picture: user.picture,
-                    name: user.name,
-                    email_verified: user.email_verified,
-                    id: usuarioCadastrado.id,
-                    perfil: usuarioCadastrado.perfil       
-                })
+    // USUARIO V010921
+    usuarioAtivo = [];
+    loginStatus = "";
+    user = req.oidc.user;
+    if (user) {
+      // Já é usuário cadastrado na base do sistema
 
-                loginStatus = 'usuarioAtivo'
+      usuarioCadastrado = await Usuario.retornaUsuarioCadastrado(user.email);
 
-            }
-            else {
+      if (usuarioCadastrado != 0) {
+        console.log("LOG: usuario cadastrado encontrado:", usuarioCadastrado);
 
-                usuarioAtivo.push({
-                    email: user.email,
-                    picture: user.picture,
-                    name: user.name,
-                    email_verified: user.email_verified
-                })
-                
-                return res.render('usuarionovo',{usuarioAtivo: usuarioAtivo[0]})
-     
-            }  
+        usuarioAtivo.push({
+          email: user.email,
+          picture: user.picture,
+          name: user.name,
+          email_verified: user.email_verified,
+          id: usuarioCadastrado.id,
+          perfil: usuarioCadastrado.perfil,
+        });
 
-        }
-        // USUARIO FIM
+        loginStatus = "usuarioAtivo";
+      } else {
+        usuarioAtivo.push({
+          email: user.email,
+          picture: user.picture,
+          name: user.name,
+          email_verified: user.email_verified,
+        });
 
-        
-        // quando não informado mostra tela de pedidos do usuário corrente
-        let usuarioId = usuarioCadastrado.id
-        console.log("usuarioId",usuarioId)
+        return res.render("usuarionovo", { usuarioAtivo: usuarioAtivo[0] });
+      }
+    }
+    // USUARIO FIM
 
-        if (req.query.usr) {
-            usuarioId = req.query.usr
-        }
+    // quando não informado mostra tela de pedidos do usuário corrente
+    let usuarioId = usuarioCadastrado.id;
+    console.log("usuarioId", usuarioId);
 
-        let usuarios = []
-        try {
-            // to-do: trazer apenas usuários que podem ser geridos por usuário corrente
-            usuarios = await Usuario.get()
-        } catch (error) {
-            //console.log('OfertaController error - falha Usuario.get')
-        }
+    if (req.query.usr) {
+      usuarioId = req.query.usr;
+    }
 
-        usuarios.sort((a,b) => (a.nome.toLowerCase() > b.nome.toLowerCase()) ? 1 : ((b.nome.toLowerCase() > a.nome.toLowerCase()) ? -1 : 0))
-        
+    let usuarios = [];
+    try {
+      // to-do: trazer apenas usuários que podem ser geridos por usuário corrente
+      usuarios = await Usuario.get();
+    } catch (error) {
+      //console.log('OfertaController error - falha Usuario.get')
+    }
 
-        const usuarioConsumidor = usuarios.find(usuario => Number(usuario.id) === Number(usuarioId)) 
-        
+    usuarios.sort((a, b) =>
+      a.nome.toLowerCase() > b.nome.toLowerCase()
+        ? 1
+        : b.nome.toLowerCase() > a.nome.toLowerCase()
+          ? -1
+          : 0,
+    );
 
-        pedidoConsumidorId = await PedidoConsumidores.findOrCreatePedidoConsumidor({
-            cicloId: cicloId,
-            usuarioId: usuarioId
-       })
+    const usuarioConsumidor = usuarios.find(
+      (usuario) => Number(usuario.id) === Number(usuarioId),
+    );
 
-       const produtos = await Produto.get();
+    pedidoConsumidorId = await PedidoConsumidores.findOrCreatePedidoConsumidor({
+      cicloId: cicloId,
+      usuarioId: usuarioId,
+    });
 
+    const produtos = await Produto.get();
 
-        const dadosCiclo = await Ciclo.getCicloId(cicloId)
+    const dadosCiclo = await Ciclo.getCicloId(cicloId);
 
-        if (dadosCiclo == 'error') {
+    if (dadosCiclo == "error") {
+      return res.send("Ciclo não existe!");
+    }
 
-            return res.send('Ciclo não existe!')
+    ciclo = dadosCiclo.ciclo[0];
 
-        } 
+    const cicloComposicoes = dadosCiclo.cicloComposicoes;
 
-        ciclo = dadosCiclo.ciclo[0]
+    // erro quando cesta GrupoCompras não existe, código me parece desnecessário
+    /*composicaoGrupoCompras = cicloComposicoes.find(cicloComposicao => Number(cicloComposicao.cestaId) == 3)
 
-        const cicloComposicoes = dadosCiclo.cicloComposicoes
-        
-        // erro quando cesta GrupoCompras não existe, código me parece desnecessário
-        /*composicaoGrupoCompras = cicloComposicoes.find(cicloComposicao => Number(cicloComposicao.cestaId) == 3)
-        
         if (!composicaoGrupoCompras) {
             composicaoGrupoCompras = cicloComposicoes.find(cicloComposicao => Number(cicloComposicao.cestaId) == 7)
         }
-        
+
         composicaoIdGrupoCompras = composicaoGrupoCompras.id
 
         produtosComposicao = await Composicao.getProdutosPorComposicao({
@@ -485,7 +507,7 @@ module.exports = {
 
         produtosComposicao.sort((a,b) => (a['ofertaProduto.produtoId'] > b['ofertaProduto.produtoId']) ? 1 : ((b['ofertaProduto.produtoId'] > a['ofertaProduto.produtoId']) ? -1 : 0))
 
-        
+
         let produtosComposicaoDados = []
         let prodCompCorrente = 0
 
@@ -496,11 +518,11 @@ module.exports = {
         }
         let quantidadeProdutoComposicaoDados = 0
         produtosComposicao.forEach(produtoComposicao => {
-            
+
             if (Number(produtoComposicao['ofertaProduto.produtoId']) > 0) {
 
                 if (prodCompCorrente == (produtoComposicao['ofertaProduto.produtoId'])) {
-           
+
                     quantidadeProdutoComposicaoDados = quantidadeProdutoComposicaoDados + Number(produtoComposicao.quantidade)
 
                 }
@@ -529,394 +551,421 @@ module.exports = {
             })
         }*/
 
-    
-        // array para busca da quantidade por produto para calculo de itens pedidos
-        /*let arrayComposicoes = []
+    // array para busca da quantidade por produto para calculo de itens pedidos
+    /*let arrayComposicoes = []
         cicloComposicoes.forEach(cicloComposicao => {
             arrayComposicoes.push(cicloComposicao.id)
         });*/
-        
-        /*produtosComposicao = await Composicao.getProdutosPorCicloComposicao({
+
+    /*produtosComposicao = await Composicao.getProdutosPorCicloComposicao({
                                 composicaoId: composicao.id
                         })*/
-        
-    
-        // Busca produtosOfertaDados
-        
-        const ofertas = await Oferta.getOfertasPorCiclo({
-            cicloId: cicloId
-        })
 
-        let cicloProdutosOfertados = []
+    // Busca produtosOfertaDados
 
-        for (let index = 0; index < ofertas.length; index++) {
-            const oferta = ofertas[index];
-            produtosOferta = await Oferta.getProdutosPorOferta({
-                ofertaId: oferta.id
-            })
-            produtosOferta.forEach(produtoOferta => {
-              cicloProdutosOfertados.push({
-                  id: produtoOferta.id,
-                  quantidade:produtoOferta.quantidade,
-                  produtoId: produtoOferta.produtoId,
-                  usuarioId: oferta.usuarioId
-              })
+    const ofertas = await Oferta.getOfertasPorCiclo({
+      cicloId: cicloId,
+    });
 
-            });
-        } 
-        
-        cicloProdutosOfertados.sort((a,b) => (a.produtoId > b.produtoId) ? 1 : ((b.produtoId > a.produtoId) ? -1 : 0))
+    let cicloProdutosOfertados = [];
 
-        let cicloOfertaProdutosDados = []
-        let produtosPedidos = []
+    for (let index = 0; index < ofertas.length; index++) {
+      const oferta = ofertas[index];
+      produtosOferta = await Oferta.getProdutosPorOferta({
+        ofertaId: oferta.id,
+      });
+      produtosOferta.forEach((produtoOferta) => {
+        cicloProdutosOfertados.push({
+          id: produtoOferta.id,
+          quantidade: produtoOferta.quantidade,
+          produtoId: produtoOferta.produtoId,
+          usuarioId: oferta.usuarioId,
+        });
+      });
+    }
 
-        let produtoCorrente = {
-            id: 0,
-            nome: "",
-            medida: "",
-            quantidadeDisponivel: 0,
-            quantidadePedido: 0,
-            fornecedores: "vazio"
+    cicloProdutosOfertados.sort((a, b) =>
+      a.produtoId > b.produtoId ? 1 : b.produtoId > a.produtoId ? -1 : 0,
+    );
+
+    let cicloOfertaProdutosDados = [];
+    let produtosPedidos = [];
+
+    let produtoCorrente = {
+      id: 0,
+      nome: "",
+      medida: "",
+      quantidadeDisponivel: 0,
+      quantidadePedido: 0,
+      fornecedores: "vazio",
+    };
+
+    let quantidadeDisp = 0;
+    let quantPedidoConsumidor = 0;
+    let statusPedido = "";
+
+    for (let index = 0; index < cicloProdutosOfertados.length; index++) {
+      const cicloOfertaProduto = cicloProdutosOfertados[index];
+
+      produtoDados = produtos.find(
+        (produto) =>
+          Number(produto.id) === Number(cicloOfertaProduto.produtoId),
+      );
+      usuarioDados = usuarios.find(
+        (usuario) =>
+          Number(usuario.id) === Number(cicloOfertaProduto.usuarioId),
+      );
+
+      pedidoConsumidor = await PedidoConsumidores.getPedidoConsumidor({
+        cicloId: cicloId,
+        usuarioId: usuarioId,
+        produtoId: cicloOfertaProduto.produtoId,
+      });
+
+      if (pedidoConsumidor === "error") {
+        return res.send("Pedido não existe!");
+      }
+
+      quantPedidoConsumidor = pedidoConsumidor.quantPedido;
+      statusPedido = pedidoConsumidor.status;
+
+      if (produtoCorrente.id == 0 || produtoDados.id == produtoCorrente.id) {
+        produtoCorrente.id = produtoDados.id;
+        produtoCorrente.nome = produtoDados.nome;
+        produtoCorrente.medida = produtoDados.medida;
+        produtoCorrente.valorReferencia = produtoDados.valorReferencia;
+        produtoCorrente.quantidadeDisponivel =
+          produtoCorrente.quantidadeDisponivel + cicloOfertaProduto.quantidade;
+        produtoCorrente.quantidadePedido = quantPedidoConsumidor;
+
+        if (cicloOfertaProduto.quantidade) {
+          if (produtoCorrente.fornecedores == "vazio") {
+            produtoCorrente.fornecedores =
+              usuarioDados.nome +
+              ":" +
+              cicloOfertaProduto.quantidade.toString();
+          } else {
+            produtoCorrente.fornecedores =
+              produtoCorrente.fornecedores + " | " + usuarioDados.nome;
+          }
         }
-
-        let quantidadeDisp = 0
-        let quantPedidoConsumidor = 0
-        let statusPedido = ''
-
-        for (let index = 0; index < cicloProdutosOfertados.length; index++) {
-            const cicloOfertaProduto = cicloProdutosOfertados[index]
-            
-            produtoDados = produtos.find(produto => Number(produto.id) === Number(cicloOfertaProduto.produtoId))
-            usuarioDados = usuarios.find(usuario => Number(usuario.id) === Number(cicloOfertaProduto.usuarioId))
-
-            pedidoConsumidor = await PedidoConsumidores.getPedidoConsumidor({
-                cicloId: cicloId,
-                usuarioId: usuarioId,
-                produtoId: cicloOfertaProduto.produtoId
-            })
-
-            if (pedidoConsumidor === 'error') {
-
-                return res.send('Pedido não existe!')
-
-            } 
-
-            quantPedidoConsumidor = pedidoConsumidor.quantPedido
-            statusPedido = pedidoConsumidor.status
-
-            if ((produtoCorrente.id == 0) || (produtoDados.id == produtoCorrente.id)) {
-                produtoCorrente.id = produtoDados.id
-                produtoCorrente.nome = produtoDados.nome
-                produtoCorrente.medida = produtoDados.medida
-                produtoCorrente.valorReferencia = produtoDados.valorReferencia
-                produtoCorrente.quantidadeDisponivel = produtoCorrente.quantidadeDisponivel + cicloOfertaProduto.quantidade
-                produtoCorrente.quantidadePedido = quantPedidoConsumidor
-
-                if (cicloOfertaProduto.quantidade) {
-                    if (produtoCorrente.fornecedores == "vazio") {
-                        produtoCorrente.fornecedores = usuarioDados.nome + ':' + cicloOfertaProduto.quantidade.toString()
-                    } else {
-                        produtoCorrente.fornecedores = produtoCorrente.fornecedores + ' | ' + usuarioDados.nome
-                    }  
-                }
-            }
-            else {
-
-                quantidadeProdutoComposicao = await Composicao.getTotalProdutosPedidosComposicaoItensAdicionais({
-                    usuarioId: usuarioId,
-                    cicloId: cicloId,
-                    produtoId: produtoCorrente.id
-                })
-
-                if (quantidadeProdutoComposicao > 0) {
-                    quantidadeDisp = quantidadeProdutoComposicao
-                } else {
-                    quantidadeDisp = 0
-                } 
-
-                quantidadeProdutoPedidoConsumidores = await PedidoConsumidores.getQuantidadeProdutoPedidoPorConsumidores({
-                    cicloId: cicloId,
-                    produtoId: produtoCorrente.id
-                })
-
-                quantidadeDisp = quantidadeDisp - quantidadeProdutoPedidoConsumidores + produtoCorrente.quantidadePedido
-
-
-                if (produtoCorrente.quantidadePedido > 0) {
-                    produtosPedidos.push ({
-                        id: produtoCorrente.id,
-                        nome: produtoCorrente.nome,
-                        medida: produtoCorrente.medida,
-                        //TO-DO: alterar para valor real quando ok na base
-                        valorReferencia: produtoCorrente.valorReferencia,
-                        quantidadeDisponivel: quantidadeDisp,
-                        quantidade: produtoCorrente.quantidadePedido,
-                        fornecedores: produtoCorrente.fornecedores
-                    })
-                }
-
-                if (quantidadeDisp > 0) {
-                    cicloOfertaProdutosDados.push ({
-                        id: produtoCorrente.id,
-                        nome: produtoCorrente.nome,
-                        medida: produtoCorrente.medida,
-                        //TO-DO: alterar para valor real quando ok na base
-                        valorReferencia: produtoCorrente.valorReferencia,
-                        quantidadeDisponivel: quantidadeDisp,
-                        quantidade: produtoCorrente.quantidadePedido,
-                        fornecedores: produtoCorrente.fornecedores
-                    })
-                }
-
-                produtoCorrente.id = produtoDados.id
-                produtoCorrente.nome = produtoDados.nome
-                produtoCorrente.medida = produtoDados.medida
-                produtoCorrente.valorReferencia = produtoDados.valorReferencia
-                produtoCorrente.quantidadeDisponivel = cicloOfertaProduto.quantidade
-                produtoCorrente.quantidadePedido = quantPedidoConsumidor
-                produtoCorrente.fornecedores = usuarioDados.nome
-            }
-        };
-
-        quantidadeProdutoComposicao = await Composicao.getTotalProdutosPedidosComposicaoItensAdicionais({
+      } else {
+        quantidadeProdutoComposicao =
+          await Composicao.getTotalProdutosPedidosComposicaoItensAdicionais({
             usuarioId: usuarioId,
             cicloId: cicloId,
-            produtoId: produtoCorrente.id
-        })
+            produtoId: produtoCorrente.id,
+          });
 
         if (quantidadeProdutoComposicao > 0) {
-            quantidadeDisp = quantidadeProdutoComposicao
+          quantidadeDisp = quantidadeProdutoComposicao;
         } else {
-            quantidadeDisp = 0
-        }  
+          quantidadeDisp = 0;
+        }
 
-        quantidadeProdutoPedidoConsumidores = await PedidoConsumidores.getQuantidadeProdutoPedidoPorConsumidores({
+        quantidadeProdutoPedidoConsumidores =
+          await PedidoConsumidores.getQuantidadeProdutoPedidoPorConsumidores({
             cicloId: cicloId,
-            produtoId: produtoCorrente.id
-        })
+            produtoId: produtoCorrente.id,
+          });
 
-        quantidadeDisp = quantidadeDisp - quantidadeProdutoPedidoConsumidores + produtoCorrente.quantidadePedido
-
+        quantidadeDisp =
+          quantidadeDisp -
+          quantidadeProdutoPedidoConsumidores +
+          produtoCorrente.quantidadePedido;
 
         if (produtoCorrente.quantidadePedido > 0) {
-            produtosPedidos.push ({
-                id: produtoCorrente.id,
-                nome: produtoCorrente.nome,
-                medida: produtoCorrente.medida,
-                //TO-DO: alterar para valor real quando ok na base
-                valorReferencia: produtoCorrente.valorReferencia,
-                quantidadeDisponivel: quantidadeDisp,
-                quantidade: produtoCorrente.quantidadePedido,
-                fornecedores: produtoCorrente.fornecedores
-            })
+          produtosPedidos.push({
+            id: produtoCorrente.id,
+            nome: produtoCorrente.nome,
+            medida: produtoCorrente.medida,
+            //TO-DO: alterar para valor real quando ok na base
+            valorReferencia: produtoCorrente.valorReferencia,
+            quantidadeDisponivel: quantidadeDisp,
+            quantidade: produtoCorrente.quantidadePedido,
+            fornecedores: produtoCorrente.fornecedores,
+          });
         }
-        
+
         if (quantidadeDisp > 0) {
-            cicloOfertaProdutosDados.push ({
-                id: produtoCorrente.id,
-                nome: produtoCorrente.nome,
-                medida: produtoCorrente.medida,
-                //TO-DO: alterar para valor real quando ok na base
-                valorReferencia: produtoCorrente.valorReferencia,
-                quantidadeDisponivel: quantidadeDisp,
-                quantidade: produtoCorrente.quantidadePedido,
-                fornecedores: produtoCorrente.fornecedores
-            })
+          cicloOfertaProdutosDados.push({
+            id: produtoCorrente.id,
+            nome: produtoCorrente.nome,
+            medida: produtoCorrente.medida,
+            //TO-DO: alterar para valor real quando ok na base
+            valorReferencia: produtoCorrente.valorReferencia,
+            quantidadeDisponivel: quantidadeDisp,
+            quantidade: produtoCorrente.quantidadePedido,
+            fornecedores: produtoCorrente.fornecedores,
+          });
         }
 
+        produtoCorrente.id = produtoDados.id;
+        produtoCorrente.nome = produtoDados.nome;
+        produtoCorrente.medida = produtoDados.medida;
+        produtoCorrente.valorReferencia = produtoDados.valorReferencia;
+        produtoCorrente.quantidadeDisponivel = cicloOfertaProduto.quantidade;
+        produtoCorrente.quantidadePedido = quantPedidoConsumidor;
+        produtoCorrente.fornecedores = usuarioDados.nome;
+      }
+    }
 
-        //cicloOfertaProdutosDados.sort()
-        cicloOfertaProdutosDados.sort((a,b) => (a.nome.toLowerCase() > b.nome.toLowerCase()) ? 1 : ((b.nome.toLowerCase() > a.nome.toLowerCase()) ? -1 : 0))
-        // FIM Busca produtosOfertaDados
+    quantidadeProdutoComposicao =
+      await Composicao.getTotalProdutosPedidosComposicaoItensAdicionais({
+        usuarioId: usuarioId,
+        cicloId: cicloId,
+        produtoId: produtoCorrente.id,
+      });
 
-        produtosPedidos.sort((a,b) => (a.nome > b.nome) ? 1 : ((b.nome > a.nome) ? -1 : 0))
-        
-        //produtosComposicaoDados.sort((a,b) => (a.nome > b.nome) ? 1 : ((b.nome > a.nome) ? -1 : 0))
-        
+    if (quantidadeProdutoComposicao > 0) {
+      quantidadeDisp = quantidadeProdutoComposicao;
+    } else {
+      quantidadeDisp = 0;
+    }
 
-        produtosPedidosConsumidorDados = cicloOfertaProdutosDados
+    quantidadeProdutoPedidoConsumidores =
+      await PedidoConsumidores.getQuantidadeProdutoPedidoPorConsumidores({
+        cicloId: cicloId,
+        produtoId: produtoCorrente.id,
+      });
 
-        //const { _raw, _json, ...userProfile } = req.user;
-        //userDados = req.user;
-        //userProfile = JSON.stringify(userProfile, null, 2)
-        //console.log("userDados:",userDados)
+    quantidadeDisp =
+      quantidadeDisp -
+      quantidadeProdutoPedidoConsumidores +
+      produtoCorrente.quantidadePedido;
 
-        if (loginStatus == 'usuarioAtivo') {
-            if ((usuarioAtivo[0].perfil.indexOf('admin') >= 0 ) || (usuarioAtivo[0].perfil.indexOf('consumidor') >= 0 ) ) {
-                //return res.render('pedidoConsumidoresConfirmacao',{ usuarioAtivo: usuarioAtivo[0], produtosComposicaoDados: produtosComposicaoDados,statusPedido: statusPedido, produtosPedidos:produtosPedidos, produtosPedidosConsumidorDados: produtosPedidosConsumidorDados, usuarioConsumidor: usuarioConsumidor, pedidoConsumidorId: pedidoConsumidorId, ciclo: ciclo, usuarios: usuarios})
-                return res.render('pedidoConsumidoresConfirmacao',{ usuarioAtivo: usuarioAtivo[0], statusPedido: statusPedido, produtosPedidos:produtosPedidos, produtosPedidosConsumidorDados: produtosPedidosConsumidorDados, usuarioConsumidor: usuarioConsumidor, pedidoConsumidorId: pedidoConsumidorId, ciclo: ciclo, usuarios: usuarios})
-            }
-            else {
-                return res.redirect('/')
-            }
+    if (produtoCorrente.quantidadePedido > 0) {
+      produtosPedidos.push({
+        id: produtoCorrente.id,
+        nome: produtoCorrente.nome,
+        medida: produtoCorrente.medida,
+        //TO-DO: alterar para valor real quando ok na base
+        valorReferencia: produtoCorrente.valorReferencia,
+        quantidadeDisponivel: quantidadeDisp,
+        quantidade: produtoCorrente.quantidadePedido,
+        fornecedores: produtoCorrente.fornecedores,
+      });
+    }
+
+    if (quantidadeDisp > 0) {
+      cicloOfertaProdutosDados.push({
+        id: produtoCorrente.id,
+        nome: produtoCorrente.nome,
+        medida: produtoCorrente.medida,
+        //TO-DO: alterar para valor real quando ok na base
+        valorReferencia: produtoCorrente.valorReferencia,
+        quantidadeDisponivel: quantidadeDisp,
+        quantidade: produtoCorrente.quantidadePedido,
+        fornecedores: produtoCorrente.fornecedores,
+      });
+    }
+
+    //cicloOfertaProdutosDados.sort()
+    cicloOfertaProdutosDados.sort((a, b) =>
+      a.nome.toLowerCase() > b.nome.toLowerCase()
+        ? 1
+        : b.nome.toLowerCase() > a.nome.toLowerCase()
+          ? -1
+          : 0,
+    );
+    // FIM Busca produtosOfertaDados
+
+    produtosPedidos.sort((a, b) =>
+      a.nome > b.nome ? 1 : b.nome > a.nome ? -1 : 0,
+    );
+
+    //produtosComposicaoDados.sort((a,b) => (a.nome > b.nome) ? 1 : ((b.nome > a.nome) ? -1 : 0))
+
+    produtosPedidosConsumidorDados = cicloOfertaProdutosDados;
+
+    //const { _raw, _json, ...userProfile } = req.user;
+    //userDados = req.user;
+    //userProfile = JSON.stringify(userProfile, null, 2)
+    //console.log("userDados:",userDados)
+
+    if (loginStatus == "usuarioAtivo") {
+      if (
+        usuarioAtivo[0].perfil.indexOf("admin") >= 0 ||
+        usuarioAtivo[0].perfil.indexOf("consumidor") >= 0
+      ) {
+        //return res.render('pedidoConsumidoresConfirmacao',{ usuarioAtivo: usuarioAtivo[0], produtosComposicaoDados: produtosComposicaoDados,statusPedido: statusPedido, produtosPedidos:produtosPedidos, produtosPedidosConsumidorDados: produtosPedidosConsumidorDados, usuarioConsumidor: usuarioConsumidor, pedidoConsumidorId: pedidoConsumidorId, ciclo: ciclo, usuarios: usuarios})
+        return res.render("pedidoConsumidoresConfirmacao", {
+          usuarioAtivo: usuarioAtivo[0],
+          statusPedido: statusPedido,
+          produtosPedidos: produtosPedidos,
+          produtosPedidosConsumidorDados: produtosPedidosConsumidorDados,
+          usuarioConsumidor: usuarioConsumidor,
+          pedidoConsumidorId: pedidoConsumidorId,
+          ciclo: ciclo,
+          usuarios: usuarios,
+        });
+      } else {
+        return res.redirect("/");
+      }
+    }
+  },
+
+  async showTodosPedidosConsumidores(req, res) {
+    const cicloId = req.params.id;
+
+    // USUARIO V010921
+    usuarioAtivo = [];
+    loginStatus = "";
+    user = req.oidc.user;
+    if (user) {
+      // Já é usuário cadastrado na base do sistema
+
+      usuarioCadastrado = await Usuario.retornaUsuarioCadastrado(user.email);
+
+      if (usuarioCadastrado != 0) {
+        usuarioAtivo.push({
+          email: user.email,
+          picture: user.picture,
+          name: user.name,
+          email_verified: user.email_verified,
+          id: usuarioCadastrado.id,
+          perfil: usuarioCadastrado.perfil,
+        });
+
+        loginStatus = "usuarioAtivo";
+      } else {
+        usuarioAtivo.push({
+          email: user.email,
+          picture: user.picture,
+          name: user.name,
+          email_verified: user.email_verified,
+        });
+
+        return res.render("usuarionovo", { usuarioAtivo: usuarioAtivo[0] });
+      }
+    }
+    // USUARIO FIM
+
+    if (req.query.usr) {
+      usuarioId = req.query.usr;
+    } else {
+      usuarioId = usuarioAtivo[0].id;
+    }
+
+    if (req.query.view) {
+      view = req.query.view;
+    } else {
+      view = "not_all";
+    }
+
+    usuarios = await Usuario.get();
+
+    const dadosCiclo = await Ciclo.getCicloId(cicloId);
+
+    if (dadosCiclo == "error") {
+      return res.send("Ciclo não existe!");
+    }
+
+    ciclo = dadosCiclo.ciclo[0];
+
+    const produtos = await Produto.get();
+
+    // Busca produtosOfertaDados
+
+    pedidosConsumidores =
+      await PedidoConsumidores.getProdutosPedidosConsumidores(
+        cicloId,
+        usuarioId,
+        view,
+      );
+
+    produtosPedidosConsumidorDados = [];
+
+    if (pedidosConsumidores[0]) {
+      pedidosConsumidores.sort((a, b) =>
+        a.usuarioId > b.usuarioId ? 1 : b.usuarioId > a.usuarioId ? -1 : 0,
+      );
+
+      let usuarioCorrente = 0;
+      if (pedidosConsumidores[0].usuarioId > 0) {
+        usuarioCorrente = pedidosConsumidores[0].usuarioId;
+      }
+      for (let index = 0; index < pedidosConsumidores.length; index++) {
+        const pedidoConsumidor = pedidosConsumidores[index];
+
+        produtoDados = produtos.find(
+          (produto) =>
+            Number(produto.id) === Number(pedidoConsumidor.produtoId),
+        );
+        usuarioDados = usuarios.find(
+          (usuario) =>
+            Number(usuario.id) === Number(pedidoConsumidor.usuarioId),
+        );
+
+        if (pedidoConsumidor.quantidade > 0) {
+          if (usuarioCorrente != usuarioDados.id) {
+            usuarioCorrente = usuarioDados.id;
+          }
+
+          produtosPedidosConsumidorDados.push({
+            id: produtoDados.id,
+            nome: produtoDados.nome,
+            medida: produtoDados.medida,
+            //TO-DO: alterar para valor real quando ok na base
+            valorReferencia: produtoDados.valorReferencia,
+            quantidade: pedidoConsumidor.quantidade,
+            consumidorId: usuarioDados.id,
+            consumidor: usuarioDados.nome,
+            valorAcumuladoPedido: 0,
+          });
+        }
+      }
+
+      //cicloOfertaProdutosDados.sort()
+      produtosPedidosConsumidorDados.sort((a, b) =>
+        a.consumidor > b.consumidor ? 1 : b.consumidor > a.consumidor ? -1 : 0,
+      );
+      // FIM Busca produtosOfertaDados
+
+      usuarioCorrente = 0;
+      if (produtosPedidosConsumidorDados[0].consumidorId > 0) {
+        usuarioCorrente = produtosPedidosConsumidorDados[0].consumidorId;
+      }
+
+      valorAcumuladoPedido = 0;
+      ultimaPosicao = 0;
+
+      for (
+        let index = 0;
+        index < produtosPedidosConsumidorDados.length;
+        index++
+      ) {
+        const produtoPedidosConsumidorDados =
+          produtosPedidosConsumidorDados[index];
+
+        if (usuarioCorrente != produtoPedidosConsumidorDados.consumidorId) {
+          produtosPedidosConsumidorDados[index - 1].valorAcumuladoPedido =
+            valorAcumuladoPedido;
+          valorAcumuladoPedido = 0;
+          usuarioCorrente = produtoPedidosConsumidorDados.consumidorId;
         }
 
-    },
+        valorAcumuladoPedido =
+          valorAcumuladoPedido +
+          Number(produtoPedidosConsumidorDados.quantidade) *
+            Number(produtoPedidosConsumidorDados.valorReferencia);
 
+        ultimaPosicao = index;
+      }
+      produtosPedidosConsumidorDados[ultimaPosicao].valorAcumuladoPedido =
+        valorAcumuladoPedido;
 
+      //cicloOfertaProdutosDados.sort()
+      produtosPedidosConsumidorDados.sort((a, b) =>
+        a.consumidor > b.consumidor ? 1 : b.consumidor > a.consumidor ? -1 : 0,
+      );
+      // FIM Busca produtosOfertaDados
 
+      let consumidorAnterior = 0;
+      let valorAcumulado = 0;
+      let taxaAdministrativa = 0;
 
-
-
-
-
-
-
-
-
-
-
-    async showTodosPedidosConsumidores(req, res) {
-        const cicloId = req.params.id
-
-        // USUARIO V010921
-        usuarioAtivo = []
-        loginStatus = ""
-        user = req.oidc.user
-        if (user) {
-            
-            // Já é usuário cadastrado na base do sistema
-
-            usuarioCadastrado = await Usuario.retornaUsuarioCadastrado(user.email)
-
-            if (usuarioCadastrado != 0) {
-
-                usuarioAtivo.push({
-                    email: user.email,
-                    picture: user.picture,
-                    name: user.name,
-                    email_verified: user.email_verified,
-                    id: usuarioCadastrado.id,
-                    perfil: usuarioCadastrado.perfil       
-                })
-
-                loginStatus = 'usuarioAtivo'
-
-            }
-            else {
-
-                usuarioAtivo.push({
-                    email: user.email,
-                    picture: user.picture,
-                    name: user.name,
-                    email_verified: user.email_verified
-                })
-                
-                return res.render('usuarionovo',{usuarioAtivo: usuarioAtivo[0]})
-     
-            }  
-
-        }
-        // USUARIO FIM
-
-        
-        if (req.query.usr) {
-            usuarioId = req.query.usr
-        } 
-        else {
-            usuarioId = usuarioAtivo[0].id
-        }
-
-        if (req.query.view) {
-            view = req.query.view
-        } else {
-            view = "not_all"
-        }
-
-
-        usuarios = await Usuario.get()
-
-        const dadosCiclo = await Ciclo.getCicloId(cicloId)
-
-        if (dadosCiclo == 'error') {
-            return res.send('Ciclo não existe!')
-        } 
-        
-        ciclo = dadosCiclo.ciclo[0]
-
-        const produtos = await Produto.get();
-
-        // Busca produtosOfertaDados
-
-        pedidosConsumidores = await PedidoConsumidores.getProdutosPedidosConsumidores(cicloId,usuarioId,view)
-        
-        produtosPedidosConsumidorDados = []
-
-        if (pedidosConsumidores[0]) {
-            pedidosConsumidores.sort((a,b) => (a.usuarioId > b.usuarioId) ? 1 : ((b.usuarioId > a.usuarioId) ? -1 : 0))
-        
-            
-            let usuarioCorrente = 0
-            if ((pedidosConsumidores[0].usuarioId) > 0) {
-                usuarioCorrente =  pedidosConsumidores[0].usuarioId
-            }
-            for (let index = 0; index < pedidosConsumidores.length; index++) {
-                const pedidoConsumidor = pedidosConsumidores[index]
-            
-                produtoDados = produtos.find(produto => Number(produto.id) === Number(pedidoConsumidor.produtoId))
-                usuarioDados = usuarios.find(usuario => Number(usuario.id) === Number(pedidoConsumidor.usuarioId))
-
-                if (pedidoConsumidor.quantidade > 0) {
-
-                    if (usuarioCorrente != usuarioDados.id) {
-                        usuarioCorrente = usuarioDados.id
-                    }
-
-                    produtosPedidosConsumidorDados.push ({
-                        id: produtoDados.id,
-                        nome: produtoDados.nome,
-                        medida: produtoDados.medida,
-                        //TO-DO: alterar para valor real quando ok na base
-                        valorReferencia: produtoDados.valorReferencia,
-                        quantidade: pedidoConsumidor.quantidade,
-                        consumidorId: usuarioDados.id,
-                        consumidor: usuarioDados.nome,
-                        valorAcumuladoPedido: 0
-                    })
-
-                }
-            
-                
-            }
-
-            //cicloOfertaProdutosDados.sort()
-            produtosPedidosConsumidorDados.sort((a,b) => (a.consumidor > b.consumidor) ? 1 : ((b.consumidor > a.consumidor) ? -1 : 0))
-            // FIM Busca produtosOfertaDados
-
-
-            usuarioCorrente = 0
-            if ((produtosPedidosConsumidorDados[0].consumidorId) > 0) {
-                usuarioCorrente =  produtosPedidosConsumidorDados[0].consumidorId
-            }
-
-            valorAcumuladoPedido = 0
-            ultimaPosicao = 0
-
-            for (let index = 0; index < produtosPedidosConsumidorDados.length; index++) {
-                const produtoPedidosConsumidorDados = produtosPedidosConsumidorDados[index]
-            
-                if (usuarioCorrente != produtoPedidosConsumidorDados.consumidorId) {
-                    produtosPedidosConsumidorDados[index-1].valorAcumuladoPedido = valorAcumuladoPedido
-                    valorAcumuladoPedido = 0
-                    usuarioCorrente = produtoPedidosConsumidorDados.consumidorId
-                }
-
-                valorAcumuladoPedido = valorAcumuladoPedido + (Number(produtoPedidosConsumidorDados.quantidade) * Number(produtoPedidosConsumidorDados.valorReferencia))     
-            
-                ultimaPosicao = index
-            }
-            produtosPedidosConsumidorDados[ultimaPosicao].valorAcumuladoPedido = valorAcumuladoPedido
-                
-            //cicloOfertaProdutosDados.sort()
-            produtosPedidosConsumidorDados.sort((a,b) => (a.consumidor > b.consumidor) ? 1 : ((b.consumidor > a.consumidor) ? -1 : 0))
-            // FIM Busca produtosOfertaDados
-
-        
-            let consumidorAnterior = 0
-            let valorAcumulado = 0
-            let taxaAdministrativa = 0
-
-            /*if (req.query.mov) {
+      /*if (req.query.mov) {
 
                 if (req.query.mov == 'yes') {
                     for (let index = 0; index < produtosPedidosConsumidorDados.length; index++) {
@@ -951,7 +1000,7 @@ module.exports = {
                         taxaAdministrativa = taxaAdministrativa + 0.5*produtoPedidosConsumidorDados.quantidade
 
                         consumidorAnterior = produtoPedidosConsumidorDados.consumidorId
-        
+
                     }
 
                     await Movimentacao.criarRegistro({
@@ -961,7 +1010,7 @@ module.exports = {
                         valor: valorAcumulado,
                         status: 'ativo',
                         observacao: 'Compra Extra - '+ ciclo.nome
-                    
+
                     })
                     await Movimentacao.criarRegistro({
                         usuarioId: consumidorAnterior,
@@ -971,130 +1020,123 @@ module.exports = {
                         status: 'ativo',
                         observacao: 'Taxa Administrativa - '+ ciclo.nome
                     })
-            
+
             }}*/
-        
+    }
+
+    /* só toma esse caminho para usuários ativos */
+    return res.render("pedidosConsumidoresTodos", {
+      usuarioAtivo: usuarioAtivo[0],
+      produtosPedidosConsumidorDados: produtosPedidosConsumidorDados,
+      ciclo: ciclo,
+    });
+
+    //return res.render('pedidosConsumidoresTodos',{ produtosPedidosConsumidorDados: produtosPedidosConsumidorDados, ciclo: ciclo})
+  },
+
+  async save(req, res) {
+    //const produtos = await Produto.get();
+
+    cicloId = req.body.cicloId;
+
+    usuarioAtivo = req.body.usuarioAtivo;
+
+    usuarioConsumidorId = req.body.usuarioConsumidorId;
+
+    pedidoConsumidorId = req.body.pedidoConsumidorId;
+
+    const ofertas = await Oferta.getOfertasPorCiclo({
+      cicloId: cicloId,
+    });
+
+    let statusPedido;
+    if (req.body.hasOwnProperty("salvarPedido")) {
+      statusPedido = "ativo";
+    } else {
+      statusPedido = "finalizado";
+    }
+
+    let nomeInput = "";
+
+    for (let index = 0; index < ofertas.length; index++) {
+      const oferta = ofertas[index];
+
+      produtosOferta = await Oferta.getProdutosPorOferta({
+        ofertaId: oferta.id,
+      });
+
+      for (let index = 0; index < produtosOferta.length; index++) {
+        const produtoOferta = produtosOferta[index];
+
+        nomeInput = "quantidade" + produtoOferta.produtoId.toString();
+
+        let valueInput = 0;
+
+        if (req.body[nomeInput]) {
+          valueInput = req.body[nomeInput];
+
+          pedidoConsumidorProdutoId =
+            await PedidoConsumidores.findOrCreatePedidoConsumidorProduto({
+              pedidoConsumidorId: pedidoConsumidorId,
+              produtoId: produtoOferta.produtoId,
+            });
+
+          await PedidoConsumidores.updatePedidoConsumidoresProduto({
+            id: pedidoConsumidorProdutoId,
+            quantidade: valueInput,
+          });
         }
-        
-        /* só toma esse caminho para usuários ativos */
-        return res.render('pedidosConsumidoresTodos',{ usuarioAtivo: usuarioAtivo[0], produtosPedidosConsumidorDados: produtosPedidosConsumidorDados, ciclo: ciclo})
-    
-        
+      }
+    }
 
-        //return res.render('pedidosConsumidoresTodos',{ produtosPedidosConsumidorDados: produtosPedidosConsumidorDados, ciclo: ciclo})
-    },
-
-
-    
-    async save(req, res) {
-
-        //const produtos = await Produto.get();
-
-        cicloId = req.body.cicloId
-
-        usuarioAtivo = req.body.usuarioAtivo
-
-        usuarioConsumidorId = req.body.usuarioConsumidorId
-
-        pedidoConsumidorId = req.body.pedidoConsumidorId
-
-        const ofertas = await Oferta.getOfertasPorCiclo({
-            cicloId: cicloId
-        })
-
-        let statusPedido
-        if (req.body.hasOwnProperty("salvarPedido")){
-            statusPedido = 'ativo'
-         } else {
-            statusPedido = 'finalizado'
-         }
-
-        let nomeInput = ''
-
-        for (let index = 0; index < ofertas.length; index++) {
-            const oferta = ofertas[index];
-            
-            produtosOferta = await Oferta.getProdutosPorOferta({
-                ofertaId: oferta.id
-            })
-
-            for (let index = 0; index < produtosOferta.length; index++) {
-                const produtoOferta = produtosOferta[index];
-
-                nomeInput = 'quantidade'+ produtoOferta.produtoId.toString()
-                
-                let valueInput = 0
-
-                if (req.body[nomeInput]) {
-                  valueInput = req.body[nomeInput]
-
-                  pedidoConsumidorProdutoId = await PedidoConsumidores.findOrCreatePedidoConsumidorProduto ({
-                            pedidoConsumidorId: pedidoConsumidorId,
-                            produtoId: produtoOferta.produtoId
-                            })
-                
-                  await PedidoConsumidores.updatePedidoConsumidoresProduto ({
-                        id: pedidoConsumidorProdutoId,
-                        quantidade: valueInput
-                    })
-                }
-    
-            }
-
-        }
-
-        /*await Composicao.deleteComposicoesZero ({
+    /*await Composicao.deleteComposicoesZero ({
             composicaoId: composicaoId
         })*/
 
-        
+    return res.redirect(
+      "/pedidoConsumidoresConfirmacao/" +
+        cicloId +
+        "?usr=" +
+        usuarioConsumidorId,
+    );
+  },
 
-        
+  async finalizar(req, res) {
+    //const produtos = await Produto.get();
 
+    let statusPedido;
+    if (req.body.hasOwnProperty("retornarPedido")) {
+      statusPedido = "retornar";
+    } else {
+      if (req.body.hasOwnProperty("alterarPedido")) {
+        statusPedido = "ativo";
+      } else {
+        statusPedido = "finalizado";
+      }
+    }
 
-        return res.redirect('/pedidoConsumidoresConfirmacao/' + cicloId+ '?usr=' + usuarioConsumidorId)
-        
+    cicloId = req.body.cicloId;
 
-    },
+    usuarioAtivo = req.body.usuarioAtivo;
 
+    usuarioConsumidorId = req.body.usuarioConsumidorId;
 
-    async finalizar(req, res) {
+    pedidoConsumidorId = req.body.pedidoConsumidorId;
 
-        //const produtos = await Produto.get();
+    if (statusPedido == "retornar") {
+      return res.redirect(
+        "/pedidoConsumidores/" + cicloId + "?usr=" + usuarioConsumidorId,
+      );
 
-        let statusPedido
-        if (req.body.hasOwnProperty("retornarPedido")){
-            statusPedido = 'retornar'
-        } else {
-            if (req.body.hasOwnProperty("alterarPedido")){
-                statusPedido = 'ativo'
-            }  else {
-                statusPedido = 'finalizado'
-            }
-        }
-
-        cicloId = req.body.cicloId
-
-        usuarioAtivo = req.body.usuarioAtivo
-
-        usuarioConsumidorId = req.body.usuarioConsumidorId
-
-        pedidoConsumidorId = req.body.pedidoConsumidorId
-
-        if (statusPedido == 'retornar') {
-
-                return res.redirect('/pedidoConsumidores/' + cicloId+ '?usr=' + usuarioConsumidorId)
-        
-
-                /*const ofertas = await Oferta.getOfertasPorCiclo({
+      /*const ofertas = await Oferta.getOfertasPorCiclo({
                     cicloId: cicloId
                 })*/
 
-                /*let nomeInput = ''*/
+      /*let nomeInput = ''*/
 
-                /*for (let index = 0; index < ofertas.length; index++) {
+      /*for (let index = 0; index < ofertas.length; index++) {
                     const oferta = ofertas[index];
-                    
+
                     produtosOferta = await Oferta.getProdutosPorOferta({
                         ofertaId: oferta.id
                     })
@@ -1103,7 +1145,7 @@ module.exports = {
                         const produtoOferta = produtosOferta[index];
 
                         nomeInput = 'quantidade'+ produtoOferta.produtoId.toString()
-                        
+
                         let valueInput = 0
 
                         if (req.body[nomeInput]) {
@@ -1113,7 +1155,7 @@ module.exports = {
                                     pedidoConsumidorId: pedidoConsumidorId,
                                     produtoId: produtoOferta.produtoId
                                     })
-                        
+
                         await PedidoConsumidores.updatePedidoConsumidoresProduto ({
                                 id: pedidoConsumidorProdutoId,
                                 quantidade: valueInput,
@@ -1121,52 +1163,40 @@ module.exports = {
                                 status: statusPedido
                             })
                         }
-            
+
                     }
 
                 }*/
-        
-        } else {
+    } else {
+      await PedidoConsumidores.finalizaPedidoConsumidor({
+        pedidoConsumidorId: pedidoConsumidorId,
+        status: statusPedido,
+      });
 
-            await PedidoConsumidores.finalizaPedidoConsumidor ({
-                pedidoConsumidorId: pedidoConsumidorId,
-                status: statusPedido
-            })
-
-            if (statusPedido == 'ativo') {
-
-                return res.redirect('/pedidoConsumidores/' + cicloId+ '?usr=' + usuarioConsumidorId)
-            
-            } else {
-
-                return res.redirect('/pedidoConsumidoresConfirmacao/' + cicloId+ '?usr=' + usuarioConsumidorId)
-            }
-        
-            
-
-        }
-
-        /*await Composicao.deleteComposicoesZero ({
-            composicaoId: composicaoId
-        })*/
-
-        
-
-        
-
-
-        
-
+      if (statusPedido == "ativo") {
+        return res.redirect(
+          "/pedidoConsumidores/" + cicloId + "?usr=" + usuarioConsumidorId,
+        );
+      } else {
+        return res.redirect(
+          "/pedidoConsumidoresConfirmacao/" +
+            cicloId +
+            "?usr=" +
+            usuarioConsumidorId,
+        );
+      }
     }
 
-    
+    /*await Composicao.deleteComposicoesZero ({
+            composicaoId: composicaoId
+        })*/
+  },
 
-    
-    /*delete(req, res) {
+  /*delete(req, res) {
         const composicaoId = req.params.id
 
         Composicao.delete(composicaoId)
 
         return res.redirect('/composicao-index')
     }*/
-}
+};
