@@ -1,7 +1,8 @@
 # language: pt
 Funcionalidade: Gestão de Usuários
 
-  Cenário: USR-01 Criar um novo usuário com sucesso
+  @usuario @USR-01 @pending
+  Cenário: Criar um novo usuário com sucesso
     Dado que eu quero criar um novo usuário
     Quando eu preencho o nome do usuário com "João da Silva Santos"
     E o nome fantasia do usuário com "João Silva"
@@ -14,12 +15,14 @@ Funcionalidade: Gestão de Usuários
     Quando eu salvo o novo usuário
     Então o usuário "João da Silva Santos" deve ser criado com sucesso
 
-  Cenário: USR-02 Ver os detalhes de um usuário existente
+  @usuario @USR-02 @pending
+  Cenário: Ver os detalhes de um usuário existente
     Dado que existe um usuário "Maria Santos" cadastrado
     Quando eu solicito os detalhes do usuário "Maria Santos"
     Então eu devo ver os detalhes do usuário "Maria Santos"
 
-  Cenário: USR-03 Atualizar um usuário existente
+  @usuario @USR-03 @pending
+  Cenário: Atualizar um usuário existente
     Dado que existe um usuário "Pedro Costa"
     Quando eu edito o nome do usuário para "Pedro Costa Junior"
     E eu edito o nome fantasia do usuário para "Venda do Sr. Pedro"
@@ -39,7 +42,8 @@ Funcionalidade: Gestão de Usuários
     Então o perfil do usuário deve ser "{fornecedor,consumidor}"
     Então o status do usuário deve ser "inativo"
 
-  Cenário: USR-04 Deletar um usuário existente
+  @usuario @USR-04 @pending
+  Cenário: Deletar um usuário existente
     Dado que existe um usuário "Usuário Teste"
     E que não existam ofertas ou pedidos associados ao usuário "Usuário Teste"
     E que o "Usuário Teste" não seja o único usuário com perfil "admin"
@@ -47,7 +51,8 @@ Funcionalidade: Gestão de Usuários
     Quando eu deleto o usuário "Usuário Teste"
     Então o usuário "Usuário Teste" não deve mais existir no sistema
 
-  Cenário: USR-05 Acesso ao sistema do primeiro usuário
+  @usuario @USR-05 @pending
+  Cenário: Acesso ao sistema do primeiro usuário
     Dado quero fazer login no sistema
     E estou logado no AUTH
     E que não exista nenhum usuário cadastrado
@@ -58,7 +63,8 @@ Funcionalidade: Gestão de Usuários
     Então o usuário "Admin Sistema" deve ser criado com sucesso
     E deve ter perfil de "{consumidor,admin}"
 
-  Cenário: USR-06 Acesso ao sistema quando este já possui pelo menos um usuário admin
+  @usuario @USR-06 @pending
+  Cenário: Acesso ao sistema quando este já possui pelo menos um usuário admin
     Dado quero fazer login no sistema
     E estou logado no AUTH
     E que o usuário AUTH não exista cadastrado no sistema
@@ -69,7 +75,8 @@ Funcionalidade: Gestão de Usuários
     Então o usuário "Novo Usuário" deve ser criado com sucesso
     E deve ter perfil de "{consumidor}"
 
-  Cenário: USR-07 Acesso ao sistema por usuário já cadastrado
+  @usuario @USR-07 @pending
+  Cenário: Acesso ao sistema por usuário já cadastrado
     Dado quero fazer login no sistema
     E estou logado no AUTH
     E que o usuário AUTH exista cadastrado no sistema

@@ -1,3 +1,5 @@
+const { Op } = require("sequelize");
+const { filterPayload, normalizePayload } = require("../utils/modelUtils");
 const {
   Ciclo,
   PontoEntrega,
@@ -7,12 +9,19 @@ const {
   CicloProdutos,
   Produto,
   CategoriaProdutos,
+  Composicoes,
+  ComposicaoOfertaProdutos,
+  Oferta,
+  OfertaProdutos,
   sequelize,
 } = require("../../models");
 
 const CicloModel = require("../model/Ciclo");
 const PontoEntregaModel = require("../model/PontoEntrega");
+
 const CestaModel = require("../model/Cesta");
+
+const ServiceError = require("../utils/ServiceError");
 
 class CicloService {
   async prepararDadosCriacaoCiclo() {
@@ -22,235 +31,221 @@ class CicloService {
       const tiposCesta = await CestaModel.getCestasAtivas();
       return { pontosEntrega, tiposCesta };
     } catch (error) {
-      throw new Error(
-        `Erro ao preparar dados para criação de ciclo: ${error.message}`,
-      );
+      throw new ServiceError("Falha ao preparar dados para criação de ciclo.", {
+        cause: error,
+      });
     }
   }
 
-  async criarCiclo(dados) {
-    const transaction = await sequelize.transaction();
-
+  async criarCiclo(dados, options = {}) {
+    const transaction = options.transaction || (await sequelize.transaction());
     try {
-      this._validarDadosCiclo(dados);
-
-      const novoCiclo = await Ciclo.create(
-        {
-          nome: dados.nome,
-          pontoEntregaId: dados.pontoEntregaId || null,
-          ofertaInicio: dados.ofertaInicio,
-          ofertaFim: dados.ofertaFim,
-          itensAdicionaisInicio: dados.itensAdicionaisInicio,
-          itensAdicionaisFim: dados.itensAdicionaisFim,
-          retiradaConsumidorInicio: dados.retiradaConsumidorInicio,
-          retiradaConsumidorFim: dados.retiradaConsumidorFim,
-          observacao: dados.observacao || null,
-          status: dados.status || "ativo",
-        },
-        { transaction },
+      const dadosNormalizados = normalizePayload(Ciclo, dados);
+      const allowedFields = [
+        "nome",
+        "ofertaInicio",
+        "ofertaFim",
+        "pontoEntregaId",
+        "itensAdicionaisInicio",
+        "itensAdicionaisFim",
+        "retiradaConsumidorInicio",
+        "retiradaConsumidorFim",
+        "observacao",
+      ];
+      const payloadSeguro = filterPayload(
+        Ciclo,
+        dadosNormalizados,
+        allowedFields,
       );
+      const novoCiclo = await Ciclo.create(payloadSeguro, { transaction });
 
       await this._criarEntregasCiclo(novoCiclo.id, dados, transaction);
-
       await this._criarCestasCiclo(novoCiclo.id, dados, transaction);
-
       await this._criarProdutosCiclo(novoCiclo.id, dados, transaction);
 
-      await transaction.commit();
-
-      const cicloCriado = await this.buscarCicloPorId(novoCiclo.id);
-
-      return cicloCriado;
+      if (!options.transaction) {
+        await transaction.commit();
+      }
+      return await this.buscarCicloPorId(novoCiclo.id);
     } catch (error) {
-      await transaction.rollback();
-      throw new Error(`Erro ao criar ciclo: ${error.message}`);
+      if (!options.transaction) {
+        await transaction.rollback();
+      }
+      throw new ServiceError("Falha ao criar o ciclo no serviço.", {
+        cause: error,
+      });
     }
   }
 
-  async atualizarCiclo(cicloId, dadosAtualizacao) {
-    const transaction = await sequelize.transaction();
-
+  async atualizarCiclo(cicloId, dadosAtualizacao, options = {}) {
+    const transaction = options.transaction || (await sequelize.transaction());
     try {
       const cicloExistente = await Ciclo.findByPk(cicloId);
       if (!cicloExistente) {
         throw new Error(`Ciclo com ID ${cicloId} não encontrado`);
       }
 
-      await cicloExistente.update(
-        {
-          nome: dadosAtualizacao.nome || cicloExistente.nome,
-          pontoEntregaId:
-            dadosAtualizacao.pontoEntregaId !== undefined
-              ? dadosAtualizacao.pontoEntregaId
-              : cicloExistente.pontoEntregaId,
-          ofertaInicio:
-            dadosAtualizacao.ofertaInicio || cicloExistente.ofertaInicio,
-          ofertaFim: dadosAtualizacao.ofertaFim || cicloExistente.ofertaFim,
-          itensAdicionaisInicio:
-            dadosAtualizacao.itensAdicionaisInicio ||
-            cicloExistente.itensAdicionaisInicio,
-          itensAdicionaisFim:
-            dadosAtualizacao.itensAdicionaisFim ||
-            cicloExistente.itensAdicionaisFim,
-          retiradaConsumidorInicio:
-            dadosAtualizacao.retiradaConsumidorInicio ||
-            cicloExistente.retiradaConsumidorInicio,
-          retiradaConsumidorFim:
-            dadosAtualizacao.retiradaConsumidorFim ||
-            cicloExistente.retiradaConsumidorFim,
-          observacao:
-            dadosAtualizacao.observacao !== undefined
-              ? dadosAtualizacao.observacao
-              : cicloExistente.observacao,
-          status: dadosAtualizacao.status || cicloExistente.status,
-        },
-        { transaction },
+      const dadosNormalizados = normalizePayload(Ciclo, dadosAtualizacao);
+      const allowedFields = [
+        "nome",
+        "ofertaInicio",
+        "ofertaFim",
+        "pontoEntregaId",
+        "itensAdicionaisInicio",
+        "itensAdicionaisFim",
+        "retiradaConsumidorInicio",
+        "retiradaConsumidorFim",
+        "observacao",
+        "status",
+      ];
+      const payloadSeguro = filterPayload(
+        Ciclo,
+        dadosNormalizados,
+        allowedFields,
       );
+      await cicloExistente.update(payloadSeguro, { transaction });
 
-      if (this._temDadosEntrega(dadosAtualizacao)) {
+      if (this._temDadosEntrega(dadosNormalizados)) {
         await this._atualizarEntregasCiclo(
           cicloId,
-          dadosAtualizacao,
+          dadosNormalizados,
           transaction,
         );
       }
-
-      if (this._temDadosCesta(dadosAtualizacao)) {
+      if (this._temDadosCesta(dadosNormalizados)) {
         await this._atualizarCestasCiclo(
           cicloId,
-          dadosAtualizacao,
+          dadosNormalizados,
           transaction,
         );
       }
-
-      if (this._temDadosProduto(dadosAtualizacao)) {
+      if (this._temDadosProduto(dadosNormalizados)) {
         await this._atualizarProdutosCiclo(
           cicloId,
-          dadosAtualizacao,
+          dadosNormalizados,
           transaction,
         );
       }
 
-      await transaction.commit();
-
-      const cicloAtualizado = await this.buscarCicloPorId(cicloId);
-
-      return cicloAtualizado;
+      if (!options.transaction) {
+        await transaction.commit();
+      }
+      return await this.buscarCicloPorId(cicloId);
     } catch (error) {
-      await transaction.rollback();
-      throw new Error(`Erro ao atualizar ciclo: ${error.message}`);
+      if (!options.transaction) {
+        await transaction.rollback();
+      }
+      throw new ServiceError("Falha ao atualizar o ciclo no serviço.", {
+        cause: error,
+      });
     }
   }
 
   async buscarCicloPorId(cicloId) {
     const ciclo = await Ciclo.findByPk(cicloId, {
       include: [
-        {
-          model: PontoEntrega,
-          as: "pontoEntrega",
-        },
-        {
-          model: CicloEntregas,
-          as: "cicloEntregas",
-        },
+        { model: PontoEntrega, as: "pontoEntrega" },
+        { model: CicloEntregas, as: "cicloEntregas" },
         {
           model: CicloCestas,
           as: "CicloCestas",
-          include: [
-            {
-              model: Cesta,
-              as: "cesta",
-            },
-          ],
+          include: [{ model: Cesta, as: "cesta" }],
         },
-        {
-          model: CicloProdutos,
-          as: "cicloProdutos",
-        },
+        { model: CicloProdutos, as: "cicloProdutos" },
       ],
     });
-
     if (!ciclo) {
       throw new Error(`Ciclo com ID ${cicloId} não encontrado`);
     }
-
     const pontosEntrega = await PontoEntrega.findAll({
       where: { status: "ativo" },
     });
-
-    const tiposCesta = await Cesta.findAll({
-      where: { status: "ativo" },
-    });
-
-    return {
-      ...ciclo.toJSON(),
-      pontosEntrega,
-      tiposCesta,
-    };
+    const tiposCesta = await Cesta.findAll({ where: { status: "ativo" } });
+    return { ...ciclo.toJSON(), pontosEntrega, tiposCesta };
   }
 
-  async listarCiclos(limite = 10, offset = 0) {
+  async listarCiclos(limite = 10, cursor = null) {
+    const where = {};
+    if (cursor) {
+      where.createdAt = { [Op.lt]: new Date(cursor) };
+    }
     const { count, rows } = await Ciclo.findAndCountAll({
+      where,
       limit: limite,
-      offset: offset,
-      include: [
-        {
-          model: PontoEntrega,
-          as: "pontoEntrega",
-        },
-      ],
+      include: [{ model: PontoEntrega, as: "pontoEntrega" }],
       order: [["createdAt", "DESC"]],
     });
-
-    return {
-      total: count,
-      ciclos: rows,
-      limite,
-      offset,
-    };
+    const nextCursor = rows.length > 0 ? rows[rows.length - 1].createdAt : null;
+    return { total: count, ciclos: rows, limite, nextCursor };
   }
 
-  async deletarCiclo(cicloId) {
-    const transaction = await sequelize.transaction();
-
+  async deletarCiclo(cicloId, options = {}) {
+    const transaction = options.transaction || (await sequelize.transaction());
     try {
       const ciclo = await Ciclo.findByPk(cicloId);
-
       if (!ciclo) {
         throw new Error(`Ciclo com ID ${cicloId} não encontrado`);
       }
-
       await ciclo.destroy({ transaction });
-
-      await transaction.commit();
+      if (!options.transaction) {
+        await transaction.commit();
+      }
       return true;
     } catch (error) {
-      await transaction.rollback();
-      throw new Error(`Erro ao deletar ciclo: ${error.message}`);
+      if (!options.transaction) {
+        await transaction.rollback();
+      }
+      throw new ServiceError(`Falha ao deletar o ciclo.`, { cause: error });
     }
   }
 
-  _validarDadosCiclo(dados) {
-    const camposObrigatorios = ["nome"];
-
-    for (const campo of camposObrigatorios) {
-      if (!dados[campo]) {
-        throw new Error(`Campo obrigatório ausente: ${campo}`);
+  _extrairEntregas(dados) {
+    const entregas = [];
+    Object.keys(dados).forEach((key) => {
+      if (key.startsWith("entregaFornecedorInicio")) {
+        const index = key.replace("entregaFornecedorInicio", "");
+        const fimKey = `entregaFornecedorFim${index}`;
+        if (dados[key] && dados[fimKey]) {
+          entregas.push({ inicio: dados[key], fim: dados[fimKey] });
+        }
       }
-    }
+    });
+    return entregas;
+  }
 
-    if (dados.ofertaInicio && dados.ofertaFim) {
-      if (new Date(dados.ofertaInicio) > new Date(dados.ofertaFim)) {
-        throw new Error(
-          "Data de início da oferta não pode ser posterior à data de fim",
-        );
+  _extrairCestas(dados) {
+    const cestas = [];
+    Object.keys(dados).forEach((key) => {
+      if (key.startsWith("cestaId")) {
+        const index = key.replace("cestaId", "");
+        const qtdKey = `quantidadeCestas${index}`;
+        if (dados[key] && dados[qtdKey] > 0) {
+          cestas.push({ id: dados[key], quantidade: parseInt(dados[qtdKey]) });
+        }
       }
-    }
+    });
+    return cestas;
+  }
+
+  _extrairProdutos(dados) {
+    const produtos = [];
+    Object.keys(dados).forEach((key) => {
+      if (key.startsWith("produtoId")) {
+        const index = key.replace("produtoId", "");
+        const qtdKey = `quantidadeProdutos${index}`;
+        if (dados[key] && dados[qtdKey] > 0) {
+          produtos.push({
+            id: dados[key],
+            quantidade: parseInt(dados[qtdKey]),
+          });
+        }
+      }
+    });
+    return produtos;
   }
 
   async _criarEntregasCiclo(cicloId, dados, transaction) {
     const entregas = this._extrairEntregas(dados);
-
     for (const entrega of entregas) {
       await CicloEntregas.create(
         {
@@ -265,14 +260,9 @@ class CicloService {
 
   async _criarCestasCiclo(cicloId, dados, transaction) {
     const cestas = this._extrairCestas(dados);
-
     for (const cesta of cestas) {
       await CicloCestas.create(
-        {
-          cicloId,
-          cestaId: cesta.id,
-          quantidadeCestas: cesta.quantidade,
-        },
+        { cicloId, cestaId: cesta.id, quantidadeCestas: cesta.quantidade },
         { transaction },
       );
     }
@@ -280,138 +270,39 @@ class CicloService {
 
   async _criarProdutosCiclo(cicloId, dados, transaction) {
     const produtos = this._extrairProdutos(dados);
-
     for (const produto of produtos) {
       await CicloProdutos.create(
-        {
-          cicloId,
-          produtoId: produto.id,
-          quantidade: produto.quantidade,
-        },
+        { cicloId, produtoId: produto.id, quantidade: produto.quantidade },
         { transaction },
       );
     }
   }
 
   async _atualizarEntregasCiclo(cicloId, dados, transaction) {
-    await CicloEntregas.destroy({
-      where: { cicloId },
-      transaction,
-    });
-
+    await CicloEntregas.destroy({ where: { cicloId }, transaction });
     await this._criarEntregasCiclo(cicloId, dados, transaction);
   }
 
   async _atualizarCestasCiclo(cicloId, dados, transaction) {
-    await CicloCestas.destroy({
-      where: { cicloId },
-      transaction,
-    });
-
+    await CicloCestas.destroy({ where: { cicloId }, transaction });
     await this._criarCestasCiclo(cicloId, dados, transaction);
   }
 
   async _atualizarProdutosCiclo(cicloId, dados, transaction) {
-    await CicloProdutos.destroy({
-      where: { cicloId },
-      transaction,
-    });
-
+    await CicloProdutos.destroy({ where: { cicloId }, transaction });
     await this._criarProdutosCiclo(cicloId, dados, transaction);
   }
 
-  _extrairEntregas(dados) {
-    const entregas = [];
-    let contador = 1;
-
-    while (dados[`entregaFornecedorInicio${contador}`]) {
-      const inicio = dados[`entregaFornecedorInicio${contador}`];
-      const fim = dados[`entregaFornecedorFim${contador}`];
-
-      if (inicio && fim) {
-        entregas.push({ inicio, fim });
-      }
-
-      contador++;
-    }
-
-    if (entregas.length === 0 && dados.entregaFornecedorInicio1) {
-      let contador = 1;
-      while (dados[`entregaFornecedorInicio${contador}`]) {
-        const inicio = dados[`entregaFornecedorInicio${contador}`];
-        const fim = dados[`entregaFornecedorFim${contador}`];
-
-        if (inicio && fim) {
-          entregas.push({ inicio, fim });
-        }
-
-        contador++;
-      }
-    }
-
-    return entregas;
-  }
-
-  _extrairCestas(dados) {
-    const cestas = [];
-    let contador = 1;
-
-    while (dados[`cestaId${contador}`]) {
-      const id = dados[`cestaId${contador}`];
-      const quantidade = dados[`quantidadeCestas${contador}`];
-
-      if (id && quantidade && quantidade > 0) {
-        cestas.push({ id, quantidade: parseInt(quantidade) });
-      }
-
-      contador++;
-    }
-
-    if (cestas.length === 0 && dados.cestaId1) {
-      let contador = 1;
-      while (dados[`cestaId${contador}`]) {
-        const id = dados[`cestaId${contador}`];
-        const quantidade = dados[`quantidadeCestas${contador}`];
-
-        if (id && quantidade && quantidade > 0) {
-          cestas.push({ id, quantidade: parseInt(quantidade) });
-        }
-
-        contador++;
-      }
-    }
-
-    return cestas;
-  }
-
-  _extrairProdutos(dados) {
-    const produtos = [];
-    let contador = 1;
-
-    while (dados[`produtoId${contador}`]) {
-      const id = dados[`produtoId${contador}`];
-      const quantidade = dados[`quantidadeProdutos${contador}`];
-
-      if (id && quantidade && quantidade > 0) {
-        produtos.push({ id, quantidade: parseInt(quantidade) });
-      }
-
-      contador++;
-    }
-
-    return produtos;
-  }
-
   _temDadosEntrega(dados) {
-    return dados.entregaFornecedorInicio1 || dados.entregaFornecedorInicio1;
+    return Object.keys(dados).some((k) =>
+      k.startsWith("entregaFornecedorInicio"),
+    );
   }
-
   _temDadosCesta(dados) {
-    return dados.cestaId1 || dados.cestaId1;
+    return Object.keys(dados).some((k) => k.startsWith("cestaId"));
   }
-
   _temDadosProduto(dados) {
-    return dados.produtoId1 || dados.produtoId1;
+    return Object.keys(dados).some((k) => k.startsWith("produtoId"));
   }
 }
 
@@ -419,63 +310,511 @@ class ProdutoService {
   async criarProduto(dadosProduto) {
     try {
       if (!dadosProduto || !dadosProduto.nome) {
-        throw new Error("O nome do produto é obrigatório.");
+        throw new ServiceError("O nome do produto é obrigatório.");
       }
-
-      const produto = await Produto.create(dadosProduto);
-      return produto;
+      const allowedFields = [
+        "nome",
+        "medida",
+        "pesoGrama",
+        "valorReferencia",
+        "status",
+        "descritivo",
+        "categoriaId",
+      ];
+      const payloadSeguro = filterPayload(Produto, dadosProduto, allowedFields);
+      return await Produto.create(payloadSeguro);
     } catch (error) {
-      throw new Error(`Erro ao criar produto: ${error.message}`);
+      throw new ServiceError("Falha ao criar produto.", { cause: error });
     }
   }
 
   async buscarProdutoPorId(id) {
-    const produto = await Produto.findByPk(id, {
-      include: [
-        {
-          model: CategoriaProdutos,
-          as: "categoria",
-        },
-      ],
-    });
-
-    if (!produto) {
-      throw new Error(`Produto com ID ${id} não encontrado`);
+    try {
+      const produto = await Produto.findByPk(id, {
+        include: [{ model: CategoriaProdutos, as: "categoria" }],
+      });
+      if (!produto) {
+        throw new ServiceError(`Produto com ID ${id} não encontrado`);
+      }
+      return produto;
+    } catch (error) {
+      if (error instanceof ServiceError) {
+        throw error;
+      }
+      throw new ServiceError("Falha ao buscar produto por ID.", {
+        cause: error,
+      });
     }
-
-    return produto;
   }
 
   async atualizarProduto(id, dadosParaAtualizar) {
     try {
-      const produto = await Produto.findByPk(id);
-
-      if (!produto) {
-        throw new Error(`Produto com ID ${id} não encontrado`);
-      }
-
-      await produto.update(dadosParaAtualizar);
-
+      const produto = await this.buscarProdutoPorId(id);
+      const allowedFields = [
+        "nome",
+        "medida",
+        "pesoGrama",
+        "valorReferencia",
+        "status",
+        "descritivo",
+        "categoriaId",
+      ];
+      const payloadSeguro = filterPayload(
+        Produto,
+        dadosParaAtualizar,
+        allowedFields,
+      );
+      await produto.update(payloadSeguro);
       return produto;
     } catch (error) {
-      throw new Error(`Erro ao atualizar produto: ${error.message}`);
+      throw new ServiceError("Falha ao atualizar produto.", { cause: error });
     }
   }
 
   async deletarProduto(id) {
     try {
-      const produto = await Produto.findByPk(id);
-
-      if (!produto) {
-        throw new Error(`Produto com ID ${id} não encontrado`);
-      }
-
+      const produto = await this.buscarProdutoPorId(id);
       await produto.destroy();
       return true;
     } catch (error) {
-      throw new Error(`Erro ao deletar produto: ${error.message}`);
+      throw new ServiceError("Falha ao deletar produto.", { cause: error });
     }
   }
 }
 
-module.exports = { CicloService, ProdutoService };
+class CestaService {
+  async criarCesta(dadosCesta) {
+    try {
+      const allowedFields = ["nome", "valormaximo", "status"];
+      const payloadSeguro = filterPayload(Cesta, dadosCesta, allowedFields);
+      return await Cesta.create(payloadSeguro);
+    } catch (error) {
+      throw new ServiceError("Falha ao criar cesta.", { cause: error });
+    }
+  }
+
+  async buscarCestaPorId(id) {
+    try {
+      const cesta = await Cesta.findByPk(id);
+      if (!cesta) {
+        throw new ServiceError(`Cesta com ID ${id} não encontrada`);
+      }
+      return cesta;
+    } catch (error) {
+      if (error instanceof ServiceError) {
+        throw error;
+      }
+      throw new ServiceError("Falha ao buscar cesta por ID.", {
+        cause: error,
+      });
+    }
+  }
+
+  async atualizarCesta(id, dadosParaAtualizar) {
+    try {
+      const cesta = await this.buscarCestaPorId(id);
+      const allowedFields = ["nome", "valormaximo", "status"];
+      const payloadSeguro = filterPayload(
+        Cesta,
+        dadosParaAtualizar,
+        allowedFields,
+      );
+      await cesta.update(payloadSeguro);
+      return cesta;
+    } catch (error) {
+      throw new ServiceError("Falha ao atualizar cesta.", { cause: error });
+    }
+  }
+
+  async deletarCesta(id) {
+    try {
+      const cesta = await this.buscarCestaPorId(id);
+      await cesta.destroy();
+      return true;
+    } catch (error) {
+      throw new ServiceError("Falha ao deletar cesta.", { cause: error });
+    }
+  }
+
+  async listarCestasAtivas() {
+    try {
+      return await Cesta.findAll({ where: { status: "ativo" } });
+    } catch (error) {
+      throw new ServiceError("Falha ao listar cestas ativas.", {
+        cause: error,
+      });
+    }
+  }
+}
+
+class ComposicaoService {
+  async criarComposicao(dados) {
+    try {
+      const cicloCesta = await CicloCestas.create({
+        cicloId: dados.cicloId,
+        cestaId: dados.cestaId,
+        quantidadeCestas: dados.quantidadeCestas || 1,
+      });
+
+      const novaComposicao = await Composicoes.create({
+        cicloCestaId: cicloCesta.id,
+      });
+
+      return novaComposicao;
+    } catch (error) {
+      throw new ServiceError("Falha ao criar composição.", { cause: error });
+    }
+  }
+
+  async buscarComposicaoPorId(id) {
+    try {
+      const composicao = await Composicoes.findByPk(id, {
+        include: [
+          {
+            model: CicloCestas,
+            as: "cicloCesta",
+            include: ["ciclo", "cesta"],
+          },
+          {
+            model: ComposicaoOfertaProdutos,
+            as: "composicaoOfertaProdutos",
+            include: ["produto"],
+          },
+        ],
+      });
+
+      if (!composicao) {
+        throw new ServiceError(`Composição com ID ${id} não encontrada`);
+      }
+      return composicao;
+    } catch (error) {
+      if (error instanceof ServiceError) {
+        throw error;
+      }
+      throw new ServiceError("Falha ao buscar composição por ID.", {
+        cause: error,
+      });
+    }
+  }
+
+  async sincronizarProdutos(composicaoId, produtos) {
+    const transaction = await sequelize.transaction();
+    try {
+      await ComposicaoOfertaProdutos.destroy({
+        where: { composicaoId: composicaoId },
+        transaction,
+      });
+
+      if (produtos && produtos.length > 0) {
+        const produtosParaCriar = produtos
+          .filter((p) => p.quantidade > 0)
+          .map((p) => ({
+            composicaoId: composicaoId,
+            produtoId: p.produtoId,
+            quantidade: p.quantidade,
+            ofertaProdutoId: p.ofertaProdutoId,
+          }));
+
+        if (produtosParaCriar.length > 0) {
+          await ComposicaoOfertaProdutos.bulkCreate(produtosParaCriar, {
+            transaction,
+          });
+        }
+      }
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw new ServiceError("Falha ao sincronizar produtos da composição.", {
+        cause: error,
+      });
+    }
+  }
+
+  async calcularQuantidadePorCesta(composicaoId, produtoId) {
+    try {
+      const composicao = await Composicoes.findByPk(composicaoId, {
+        include: [
+          {
+            model: CicloCestas,
+            as: "cicloCesta",
+          },
+          {
+            model: ComposicaoOfertaProdutos,
+            as: "composicaoOfertaProdutos",
+            where: { produtoId: produtoId },
+          },
+        ],
+      });
+
+      if (
+        !composicao ||
+        !composicao.cicloCesta ||
+        !composicao.composicaoOfertaProdutos.length
+      ) {
+        throw new ServiceError(
+          "Dados da composição ou produto não encontrados.",
+        );
+      }
+
+      const numeroCestas = composicao.cicloCesta.quantidadeCestas;
+      const quantidadeTotal = composicao.composicaoOfertaProdutos[0].quantidade;
+
+      if (numeroCestas === 0) {
+        return 0;
+      }
+
+      return quantidadeTotal / numeroCestas;
+    } catch (error) {
+      if (error instanceof ServiceError) {
+        throw error;
+      }
+      throw new ServiceError("Falha ao calcular a quantidade por cesta.", {
+        cause: error,
+      });
+    }
+  }
+
+  async validarDisponibilidade(quantidadeDisponivel, quantidadeNecessaria) {
+    if (quantidadeDisponivel < quantidadeNecessaria) {
+      const falta = quantidadeNecessaria - quantidadeDisponivel;
+      return {
+        mensagem: `Quantidade insuficiente. Faltam ${falta} unidades.`,
+        necessaria: quantidadeNecessaria,
+        disponivel: quantidadeDisponivel,
+        falta: falta,
+      };
+    }
+    return null;
+  }
+
+  async listarComposicoesPorCiclo(cicloId) {
+    try {
+      return await CicloCestas.findAll({
+        where: { cicloId: cicloId },
+        include: [
+          { model: Ciclo, as: "ciclo" },
+          { model: Cesta, as: "cesta" },
+          {
+            model: Composicoes,
+            as: "composicoes",
+            include: [
+              {
+                model: ComposicaoOfertaProdutos,
+                as: "composicaoOfertaProdutos",
+                include: ["produto"],
+              },
+            ],
+          },
+        ],
+      });
+    } catch (error) {
+      throw new ServiceError("Falha ao listar composições por ciclo.", {
+        cause: error,
+      });
+    }
+  }
+
+  async obterDadosComposicao(cicloId, cestaId) {}
+}
+
+class PontoEntregaService {
+  async criarPontoEntrega(dados) {
+    try {
+      const allowedFields = ["nome", "endereco", "status"];
+      const payloadSeguro = filterPayload(PontoEntrega, dados, allowedFields);
+      return await PontoEntrega.create(payloadSeguro);
+    } catch (error) {
+      throw new ServiceError("Falha ao criar ponto de entrega.", {
+        cause: error,
+      });
+    }
+  }
+
+  async buscarPontoEntregaPorId(id) {
+    try {
+      const pontoEntrega = await PontoEntrega.findByPk(id);
+      if (!pontoEntrega) {
+        throw new ServiceError(`Ponto de entrega com ID ${id} não encontrado`);
+      }
+      return pontoEntrega;
+    } catch (error) {
+      if (error instanceof ServiceError) {
+        throw error;
+      }
+      throw new ServiceError("Falha ao buscar ponto de entrega por ID.", {
+        cause: error,
+      });
+    }
+  }
+
+  async atualizarPontoEntrega(id, dados) {
+    try {
+      const pontoEntrega = await this.buscarPontoEntregaPorId(id);
+      const allowedFields = ["nome", "endereco", "status"];
+      const payloadSeguro = filterPayload(PontoEntrega, dados, allowedFields);
+      await pontoEntrega.update(payloadSeguro);
+      return pontoEntrega;
+    } catch (error) {
+      throw new ServiceError("Falha ao atualizar ponto de entrega.", {
+        cause: error,
+      });
+    }
+  }
+
+  async deletarPontoEntrega(id) {
+    try {
+      const pontoEntrega = await this.buscarPontoEntregaPorId(id);
+      await pontoEntrega.destroy();
+      return true;
+    } catch (error) {
+      throw new ServiceError("Falha ao deletar ponto de entrega.", {
+        cause: error,
+      });
+    }
+  }
+
+  async listarPontosDeEntregaAtivos() {
+    try {
+      return await PontoEntrega.findAll({ where: { status: "ativo" } });
+    } catch (error) {
+      throw new ServiceError("Falha ao listar pontos de entrega ativos.", {
+        cause: error,
+      });
+    }
+  }
+}
+
+class OfertaService {
+  async criarOferta(dados) {
+    try {
+      const allowedFields = ["cicloId", "usuarioId"];
+      const payloadSeguro = filterPayload(Oferta, dados, allowedFields);
+      return await Oferta.create(payloadSeguro);
+    } catch (error) {
+      throw new ServiceError("Falha ao criar oferta.", { cause: error });
+    }
+  }
+
+  async adicionarProduto(ofertaId, produtoId, quantidade) {
+    try {
+      if (quantidade <= 0) {
+        throw new ServiceError("A quantidade deve ser maior que zero.");
+      }
+      const [ofertaProduto, created] = await OfertaProdutos.findOrCreate({
+        where: { ofertaId, produtoId },
+        defaults: { quantidade },
+      });
+
+      if (!created) {
+        await ofertaProduto.update({ quantidade });
+      }
+
+      return ofertaProduto;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao adicionar produto à oferta.", {
+        cause: error,
+      });
+    }
+  }
+
+  async buscarOfertaPorIdComProdutos(id) {
+    try {
+      const oferta = await Oferta.findByPk(id, {
+        include: [
+          {
+            model: OfertaProdutos,
+            as: "ofertaProdutos",
+            include: ["produto"],
+          },
+        ],
+      });
+      if (!oferta) {
+        throw new ServiceError(`Oferta com ID ${id} não encontrada`);
+      }
+      return oferta;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao buscar oferta por ID.", {
+        cause: error,
+      });
+    }
+  }
+
+  async atualizarQuantidadeProduto(ofertaProdutoId, novaQuantidade) {
+    try {
+      const ofertaProduto = await OfertaProdutos.findByPk(ofertaProdutoId);
+      if (!ofertaProduto) {
+        throw new ServiceError(
+          `Produto da oferta com ID ${ofertaProdutoId} não encontrado`,
+        );
+      }
+      if (novaQuantidade <= 0) {
+        throw new ServiceError("A quantidade deve ser maior que zero.");
+      }
+      await ofertaProduto.update({ quantidade: novaQuantidade });
+      return ofertaProduto;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao atualizar a quantidade do produto.", {
+        cause: error,
+      });
+    }
+  }
+
+  async removerProduto(ofertaProdutoId) {
+    try {
+      const ofertaProduto = await OfertaProdutos.findByPk(ofertaProdutoId);
+      if (!ofertaProduto) {
+        throw new ServiceError(
+          `Produto da oferta com ID ${ofertaProdutoId} não encontrado`,
+        );
+      }
+      await ofertaProduto.destroy();
+      return true;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao remover o produto da oferta.", {
+        cause: error,
+      });
+    }
+  }
+
+  async calcularDisponibilidadeProduto(ofertaProdutoId) {
+    try {
+      const ofertaProduto = await OfertaProdutos.findByPk(ofertaProdutoId);
+      if (!ofertaProduto) {
+        throw new ServiceError(
+          `Produto da oferta com ID ${ofertaProdutoId} não encontrado`,
+        );
+      }
+
+      const composicoes = await ofertaProduto.getComposicaoOfertaProdutos();
+
+      const quantidadeEmComposicoes = composicoes.reduce(
+        (total, comp) => total + comp.quantidade,
+        0,
+      );
+
+      return ofertaProduto.quantidade - quantidadeEmComposicoes;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError(
+        "Falha ao calcular a disponibilidade do produto.",
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+}
+
+module.exports = {
+  CicloService,
+  ProdutoService,
+  CestaService,
+  ComposicaoService,
+  PontoEntregaService,
+  OfertaService,
+};

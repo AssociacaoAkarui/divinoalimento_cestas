@@ -134,10 +134,33 @@ namespace :testes do
     sh "docker compose -f #{COMPOSE_TESTS} exec -T app_tests.dev npm install"
   end
 
-  desc 'Executar todos os testes'
+  desc 'Executar todos os testes não pendentes'
   desc 'Uso: rake testes:test # rápido (só pontos)'
-  desc '      rake testes:test # detalhe é opcional e mostra cada step + backtrace'
+  desc '      rake testes:test[detalhe] # detalhe é opcional e mostra cada step + backtrace'
   task :test, [:detalhe] do |_, args|
+    args.with_defaults(detalhe: 'false')
+
+    flags = []
+    flags << "--tags \"not @pending\""
+
+    if args.detalhe == 'detalhe'
+      flags << '--format-options \'{"colorsEnabled": true}\''
+      flags << '--backtrace'
+      puts "\n#{'='*60}"
+      puts "🐛 DEBUG"
+      puts "#{'='*60}"
+      puts "📊 Mostra cada step + backtrace de erros (excluindo @pending)"
+      puts "#{'='*60}\n\n"
+    end
+
+    cmd = "docker compose -f #{COMPOSE_TESTS} exec -T app_tests.dev npm test"
+    cmd += " -- #{flags.join(' ')}" unless flags.empty?
+
+    sh cmd
+  end
+
+  desc 'Executar TODOS os testes (incluindo pendentes)'
+  task :all, [:detalhe] do |_, args|
     args.with_defaults(detalhe: 'false')
 
     flags = []
@@ -194,23 +217,24 @@ namespace :testes do
     sh cmd
   end
 
-  desc 'Executar teste por código de cenário'
-  desc 'Uso: rake testes:cenario[CIC-01] # rápido (só pontos)'
-  desc '      rake testes:cenario[PRO-03,detalhe] # detalhe é opcional e mostra cada step + backtrace'
-  task :cenario, [:codigo, :detalhe] do |_, args|
-    if args.codigo.nil?
-      puts "\n❌ Erro: Código do cenário não especificado"
-      puts "\nUso: rake testes:cenario[codigo,detalhe]"
+  desc 'Executar teste por expressão de @tags'
+  desc 'Uso: rake "testes:tags[expression]" # rápido (só pontos)'
+  desc '      rake "testes:tags[expression,detalhe]" # detalhe é opcional e mostra cada step + backtrace'
+  task :tags, [:expression, :detalhe] do |_, args|
+    if args.expression.nil?
+      puts "\n❌ Erro: Expressão de tags não especificada"
+      puts "\nUso: rake \"testes:tags[expression,detalhe]\""
       puts "\nExemplos:"
-      puts "  rake testes:cenario[CIC-01]"
-      puts "  rake testes:cenario[PRO-03,detalhe]"
+      puts "  rake \"testes:tags[@CIC-01]\""
+      puts "  rake \"testes:tags[not @pending]\""
+      puts "  rake \"testes:tags[@cesta and not @pending,detalhe]\""
       exit 1
     end
 
     args.with_defaults(detalhe: 'false')
 
     flags = []
-    flags << "--name '#{args.codigo}'"
+    flags << "--tags \"#{args.expression}\""
 
     if args.detalhe == 'detalhe'
       flags << '--backtrace'
@@ -218,7 +242,7 @@ namespace :testes do
       puts "\n#{'='*60}"
       puts "🐛 DEBUG"
       puts "#{'='*60}"
-      puts "🎯 Cenário: #{args.codigo}"
+      puts "🎯 Expressão: #{args.expression}"
       puts "📊 Mostra cada step + backtrace de erros"
       puts "#{'='*60}\n\n"
     else

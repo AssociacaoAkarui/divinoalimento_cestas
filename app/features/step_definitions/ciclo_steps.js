@@ -18,15 +18,11 @@ Given("que eu quero criar uma nova Cesta para o ciclo", function () {});
 
 When("eu crio {int} Cesta", async function (numeroDeCestas) {
   novasCestas = [];
-
   for (let i = 0; i < numeroDeCestas; i++) {
     novasCestas.push(Factories.CestaFactory.create());
   }
-
   createdCestas = await Promise.all(
-    novasCestas.map(async (novaCesta) => {
-      return await Cesta.create(novaCesta);
-    }),
+    novasCestas.map((cesta) => Cesta.create(cesta)),
   );
 });
 
@@ -41,15 +37,11 @@ Given("que eu quero criar um novo Ponto de Entrega", function () {});
 
 When("eu crio {int} Ponto de Entrega", async function (numeroDePontoEntrega) {
   novosPontosEntrega = [];
-
   for (let i = 0; i < numeroDePontoEntrega; i++) {
     novosPontosEntrega.push(Factories.PontoEntregaFactory.create());
   }
-
   createdPontosEntrega = await Promise.all(
-    novosPontosEntrega.map(async (novoPontoEntrega) => {
-      return await PontoEntrega.create(novoPontoEntrega);
-    }),
+    novosPontosEntrega.map((ponto) => PontoEntrega.create(ponto)),
   );
 });
 
@@ -132,7 +124,11 @@ Then(
 
 Given("que eu quero criar e atualizar um ciclo", async function () {
   cicloService = new CicloService();
-  novoCiclo = Factories.CicloFactory.create();
+  const pontoEntregaData = Factories.PontoEntregaFactory.create();
+  const pontoEntrega = await PontoEntrega.create(pontoEntregaData);
+  const novoCiclo = Factories.CicloFactory.create({
+    pontoEntregaId: pontoEntrega.id,
+  });
   ciclo2 = await cicloService.criarCiclo(novoCiclo);
   cicloUpdateData = {};
 });
@@ -192,7 +188,11 @@ Given(
   "que eu quero criar e atualizar um ciclo com associações",
   async function () {
     cicloService = new CicloService();
-    novoCiclo = Factories.CicloFactory.create();
+    const pontoEntregaData = Factories.PontoEntregaFactory.create();
+    const pontoEntrega = await PontoEntrega.create(pontoEntregaData);
+    const novoCiclo = Factories.CicloFactory.create({
+      pontoEntregaId: pontoEntrega.id,
+    });
     cicloComAssociacoes = await cicloService.criarCiclo(novoCiclo);
     cicloUpdateData = {};
   },
@@ -350,7 +350,11 @@ Then(
 
 Given("que eu quero criar e deletar um ciclo", async function () {
   cicloService = new CicloService();
-  const novoCiclo = Factories.CicloFactory.create();
+  const pontoEntregaData = Factories.PontoEntregaFactory.create();
+  const pontoEntrega = await PontoEntrega.create(pontoEntregaData);
+  const novoCiclo = Factories.CicloFactory.create({
+    pontoEntregaId: pontoEntrega.id,
+  });
   ciclo = await cicloService.criarCiclo(novoCiclo);
 });
 
@@ -366,3 +370,181 @@ Then("o ciclo não deve mais existir no sistema", async function () {
     expect(error.message).to.equal(`Ciclo com ID ${ciclo.id} não encontrado`);
   }
 });
+
+Given("que eu quero cria um novo ciclo con erro", function () {
+  const unexistentPonteEntregaId = 123213;
+  cicloWithError = Factories.CicloFactory.create({
+    pontoEntregaId: unexistentPonteEntregaId,
+  });
+});
+
+When("o usuário cria um novo ciclo con erro", async function () {
+  cicloService = new CicloService();
+  try {
+    ciclo = await cicloService.criarCiclo(cicloWithError);
+  } catch (error) {
+    errorOnCreateCiclo = error;
+  }
+});
+
+Then("uma mensagem de erro deve ser retornada", function () {
+  expect(errorOnCreateCiclo).to.be.an("Error");
+  expect(errorOnCreateCiclo.message).to.not.be.empty;
+});
+
+let paginacaoResult;
+
+Given("que existem {int} ciclos cadastrados", async function (numCiclos) {
+  cicloService = new CicloService();
+  const pontoEntregaData = Factories.PontoEntregaFactory.create();
+  const pontoEntrega = await PontoEntrega.create(pontoEntregaData);
+
+  await sequelize.transaction(async (t) => {
+    for (let i = 0; i < numCiclos; i++) {
+      const novoCiclo = Factories.CicloFactory.create({
+        pontoEntregaId: pontoEntrega.id,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await cicloService.criarCiclo(novoCiclo, { transaction: t });
+    }
+  });
+});
+
+When("eu listo os ciclos com limite de {int}", async function (limite) {
+  cicloService = new CicloService();
+  paginacaoResult = await cicloService.listarCiclos(limite);
+});
+
+Then(
+  "eu devo receber {int} ciclos e um cursor para a próxima página",
+  function (numCiclos) {
+    expect(paginacaoResult.ciclos).to.have.lengthOf(numCiclos);
+    expect(paginacaoResult.nextCursor).to.not.be.null;
+  },
+);
+
+When(
+  "eu listo os ciclos novamente usando o cursor recebido",
+  async function () {
+    const limite = 10;
+    paginacaoResult = await cicloService.listarCiclos(
+      limite,
+      paginacaoResult.nextCursor,
+    );
+  },
+);
+
+Then("eu devo receber os {int} ciclos restantes", function (numCiclos) {
+  expect(paginacaoResult.ciclos).to.have.lengthOf(numCiclos);
+});
+
+const assert = require("assert");
+const ServiceError = require("../../src/utils/ServiceError");
+
+When("eu tento criar um ciclo com o nome {string}", async function (nome) {
+  cicloService = new CicloService();
+  const dadosInvalidos = Factories.CicloFactory.create({
+    nome: nome,
+    pontoEntregaId:
+      createdPontosEntrega.length > 0 ? createdPontosEntrega[0].id : 1,
+  });
+
+  try {
+    await cicloService.criarCiclo(dadosInvalidos);
+  } catch (error) {
+    errorOnCreateCiclo = error;
+  }
+});
+
+Then(
+  "eu devo receber um erro de validação com a mensagem {string}",
+  function (mensagemEsperada) {
+    // console.error("--- Log do Erro Capturado no Teste ---");
+    // console.error(errorOnCreateCiclo);
+    // console.error("------------------------------------");
+
+    expect(errorOnCreateCiclo).to.be.an.instanceOf(ServiceError);
+    expect(errorOnCreateCiclo.cause).to.exist;
+    expect(errorOnCreateCiclo.cause.name).to.equal("SequelizeValidationError");
+
+    const validationError = errorOnCreateCiclo.cause;
+    const messages = validationError.errors.map((e) => e.message);
+    expect(messages).to.include(mensagemEsperada);
+  },
+);
+
+When("eu tento criar o ciclo sem as datas de oferta", async function () {
+  cicloService = new CicloService();
+  const dadosSemData = Factories.CicloFactory.create({
+    ...cicloData,
+    ofertaInicio: null,
+    ofertaFim: null,
+    pontoEntregaId:
+      createdPontosEntrega.length > 0 ? createdPontosEntrega[0].id : 1,
+  });
+
+  try {
+    await cicloService.criarCiclo(dadosSemData);
+    assert.fail(
+      "A criação do ciclo deveria ter falhado, mas foi bem-sucedida.",
+    );
+  } catch (error) {
+    errorOnCreateCiclo = error;
+  }
+});
+
+Then(
+  "eu devo receber um erro de validação sobre as datas de oferta",
+  function () {
+    expect(errorOnCreateCiclo).to.be.an.instanceOf(ServiceError);
+    expect(errorOnCreateCiclo.cause).to.exist;
+    expect(errorOnCreateCiclo.cause.name).to.equal("SequelizeValidationError");
+
+    const messages = errorOnCreateCiclo.cause.errors.map((e) => e.message);
+    expect(messages).to.include("A data de início da oferta é obrigatória.");
+    expect(messages).to.include("A data de fim da oferta é obrigatória.");
+  },
+);
+
+When(
+  "eu tento atualizar o status para {string}",
+  async function (statusInvalido) {
+    cicloService = new CicloService();
+    try {
+      await cicloService.atualizarCiclo(ciclo2.id, { status: statusInvalido });
+      assert.fail("A atualização deveria falhar com status inválido.");
+    } catch (error) {
+      errorOnUpdateCiclo = error;
+    }
+  },
+);
+
+Then(
+  "eu devo receber um erro de validação informando que o status é inválido",
+  function () {
+    expect(errorOnUpdateCiclo).to.be.an.instanceOf(ServiceError);
+    expect(errorOnUpdateCiclo.cause).to.exist;
+    expect(errorOnUpdateCiclo.cause.name).to.equal("SequelizeValidationError");
+
+    const messages = errorOnUpdateCiclo.cause.errors.map((e) => e.message);
+    expect(messages).to.include(
+      "O status do ciclo deve ser 'oferta', 'composicao', 'atribuicao' ou 'finalizado'.",
+    );
+  },
+);
+
+When("eu incluo o campo {string} com valor {string}", function (campo, valor) {
+  cicloData[campo] = valor;
+});
+
+Then(
+  "o ciclo deve ser criado ignorando os campos {string} e {string}",
+  function (campo1, campo2) {
+    expect(ciclo).to.be.an("object");
+    expect(ciclo.id).to.exist.and.not.equal(parseInt(cicloData[campo1]));
+
+    const injectedDate = new Date(cicloData[campo2]);
+    const actualDate = new Date(ciclo.createdAt);
+    expect(actualDate.getTime()).to.not.equal(injectedDate.getTime());
+  },
+);
