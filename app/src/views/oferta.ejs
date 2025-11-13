@@ -4,662 +4,496 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#41414C" />
+    <meta name="theme-color" content="#E57021" />
     <link rel="shortcut icon" href="images/favicon.png" type="image/png" />
-    <title>Divino Alimento - Akarui</title>
-
-    <link rel="stylesheet" href="/styles/partials/header2023_v1.css" />
-
-    <link rel="stylesheet" href="/styles/main.css" />
-    <link rel="stylesheet" href="/styles/partials/cards.css" />
-    <link rel="stylesheet" href="/styles/partials/buttons.css" />
-    <link rel="stylesheet" href="/styles/partials/modal.css" />
-    <link rel="stylesheet" href="/styles/partials/forms.css" />
-    <link rel="stylesheet" href="/styles/partials/animations.css" />
+    <title>Divino Alimento - Nova Oferta</title>
 
     <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- links bootstrap -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/pages/oferta.css">
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>-->
-
-    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
-    <!--<script src="/js/jquery.min.js"></script>-->
-    <!--<script src="/js/bootstrap.bundle.min.js"></script>-->
-    
-
-
-    <link rel="stylesheet" href="/styles/pages/oferta.css" />
-
-  <script>
-      $(document).ready(function(){
-        $("#searchUsuario").on("keyup", function() {
-          //var value = $(this).val().toLowerCase();
-          var value = replaceSpecialChars($(this).val().toLowerCase())
-          $(".dropdown-menu li").filter(function() {
-            //$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-            var value2 = replaceSpecialChars($(this).text().toLowerCase())
-            $(this).toggle(value2.indexOf(value) > -1)
-          });
-        });
-      });
-
-      function replaceSpecialChars(str)	{
-        if (!str) return ''
-        str = str.toString()
-        str = str.replace(/[aáàãäâ]/,'a')
-        str = str.replace(/[eéèëê]/,'e')
-        str = str.replace(/[iíìïî]/,'i')
-        str = str.replace(/[oóòõöô]/,'o')
-        str = str.replace(/[uúùüû]/,'u')
-        str = str.replace(/[ç]/,"c")
-        return str 
-      }
-
-
-  </script>
-
-  <script>
-    $(document).ready(function(){
-      $("#searchProduto").on("keyup", function() {
-        var valueProduto = replaceSpecialChars2($(this).val().toLowerCase())
-        //var value = $(this).val().toLowerCase();
-        $("#lista-produtos .produto").filter(function() {
-          //$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-          var valueProduto2 = replaceSpecialChars2($(this).text().toLowerCase())
-          $(this).toggle(valueProduto2.indexOf(valueProduto) > -1)
-        });
-      });
-    });
-
-    function replaceSpecialChars2(str)	{
-        if (!str) return ''
-        str = str.toString()
-        str = str.replace(/[aáàäâ]/,'a')
-        str = str.replace(/[ã]/,'a')
-        str = str.replace(/[eèëê]/,'e')
-        str = str.replace(/[é]/,'e')
-        str = str.replace(/[iíìïî]/,'i')
-        str = str.replace(/[oóòõöô]/,'o')
-        str = str.replace(/[uúùüû]/,'u')
-        str = str.replace(/[ç]/,"c")
-        return str 
-      }
-
-  </script>
-
-  <script>
-    function copyTextValue(element) {
-      var id = $(element).attr('id');
-      var modalId = 'quant' + id.substr(10)
-      var text1 = document.getElementById(id).value;
-      document.getElementById(modalId).value = text1;
-    }
-  </script>
-
-  <script>
-    $(document).ready(function(){
-        $('#submitMostrarProdutos').on('click',function(){
-            //$('#container-produtos').show(); // aparece o div
-            document.getElementById("container-produtos").style.display = "flex";
-            $('#submitMostrarProdutos').hide();
-            $('#submitSalvar').show();
-            document.getElementById("etapa3").style.backgroundColor = "#A6A6A6";
-            document.getElementById("label3").style.color = "#A6A6A6";
-            document.getElementById("linha2").style.borderBlockColor = "#A6A6A6";
-            document.getElementById("etapa2").style.backgroundColor = "#E57021";
-            document.getElementById("label2").style.color = "#E57021";
-            document.getElementById("posicao-subir-lista-produtos").scrollIntoView({ behavior: "smooth" });
-            //location.hash = "#oferta-produtos";
-
-        });
-    });
-  </script>
-
-
-  <% 
-      if (loadAposSalvar == 1) {%>
-          <script type="text/javascript">
-              $(window).on('load', function() {
-                  $('#modalMensagem').modal('show');
-              });
-          </script>
-  <%  } %>
-
+    <script src="/js/services/api.service.js"></script>
+    <script src="/js/services/oferta.service.js"></script>
+    <script src="/js/utils/feedback.js"></script>
   </head>
 
   <body>
+    <header class="header">
+      <div class="header-content">
+        <h1 class="header-title">🌱 Divino Alimento - Ofertas</h1>
+
+        <% if (usuarioAtivo && usuarioAtivo.perfil && usuarioAtivo.perfil.indexOf('admin') >= 0) { %>
+          <div class="dropdown" id="userDropdown">
+            <button class="dropdown-toggle" onclick="toggleDropdown()" aria-haspopup="true" aria-expanded="false">
+              👤 <%= usuarioOferta ? usuarioOferta.nome : 'Selecionar' %>
+            </button>
+            <div class="dropdown-menu" role="menu">
+              <input class="search-input" type="text" id="searchUsuario" placeholder="Buscar fornecedor..." style="margin: 0.5rem; width: calc(100% - 1rem);">
+              <% usuarios.forEach(usuario => { %>
+                <a href="?usr=<%= usuario.id %>" class="dropdown-item" role="menuitem"><%= usuario.nome %></a>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </header>
 
     <div class="container">
+      <%
+        const ofertaInicio = Date.parse(ciclo.ofertaInicio)
+        const ofertaFim = Date.parse(ciclo.ofertaFim)
+        const dataAtual = Date.now() - 10800000
+        const tempoOfertaIniciado = ofertaInicio < dataAtual ? 1 : 0
+        const tempoOfertaFinalizado = ofertaFim < dataAtual ? 1 : 0
+        let haOferta = produtosOfertaDados.some(p => p.quantidade > 0)
+        let posIndicador = 0
+        if (tempoOfertaFinalizado) posIndicador = 3
+        else if (haOferta) posIndicador = 2
+        else if (tempoOfertaIniciado) posIndicador = 1
+      %>
 
-      <div id="page-oferta">
+      <div class="card">
+        <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Olá, <%= usuarioOferta ? usuarioOferta.nome : 'Fornecedor' %>! 👋</h2>
+        <p style="color: var(--gray-600); font-size: 1.125rem; margin-bottom: 1.5rem;">Ciclo <strong><%= ciclo.nome %></strong></p>
 
-        <%- include('parts/header2023_v1', {
-          button_text:'Adicionar Novo Produto',
-          button_link:'produto'
-        }) %>
-
-        <main>
-
-              <%  
-                  
-                  const ofertaInicio = Date.parse(ciclo.ofertaInicio)
-                  const ofertaFim = Date.parse(ciclo.ofertaFim)
-                  const dataAtual = Date.now() - 10800000
-
-                  let tempoOfertaIniciado = 0
-                  if (ofertaInicio < dataAtual) {
-                    tempoOfertaIniciado = 1
-                  } 
-
-                  let tempoOfertaFinalizado = 0
-                  if (ofertaFim < dataAtual) {
-                    tempoOfertaFinalizado = 1
-                  } 
-
-              
-                  let haOferta2 = 0
-                  produtosOfertaDados.forEach(produtoOfertaDados => {
-
-                      if (produtoOfertaDados.quantidade > 0) {
-                          haOferta2 = 1
-                      }
-                  })
-                  
-                  let posIndicador = 0
-                  if (tempoOfertaFinalizado == 1) {
-                    posIndicador = 4
-                  }
-                  else {
-                    if (haOferta2 == 1) {
-                      posIndicador = 3
-                    }
-                    else {
-                      if (tempoOfertaIniciado == 1) {
-                        posIndicador = 1
-                      }
-                    }
-                  }
-              %>
-
-            <div id="container-mensagem">
-              <p> Olá 
-                <% if (usuarioOferta) { %>
-                  <%= usuarioOferta.nome %>
-                <% } %>
-              </p>
-
-              <%  if ( usuarioAtivo.perfil) {
-                          if ( usuarioAtivo.perfil.indexOf('admin') >= 0 ) { %>  
-                              <div id="selecaoUsuario" class="input-wrapper">
-                                <div class="dropdown">
-                                  <!--<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Alterar fornecedor
-                                  <span class="caret"></span></button>-->
-                                  <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Alterar fornecedor
-                                  </span></button>
-                                  <ul class="dropdown-menu">
-                                    <input class="form-control" id="searchUsuario" type="text" placeholder="Busque o fornecedor..">
-                                        <% usuarios.forEach(usuario => { %>
-                                          <li><a href="?usr=<%= usuario.id %>"><%= usuario.nome %></a></li>
-                                        <% }) %>
-                                  </ul>
-                                </div>
-                              </div>
-                      <% }} %>
-
-              <% 
-                const labelPrimeraEtapa = "período para oferta iniciado"
-                const labelSegundaEtapa = "seleção de produtos"
-                // labelTerceira Etapa Não está sendo usado pois não arrumei solução para quebra de linha
-                const labelTerceiraEtapa = "oferta /n enviada"
-                const labelQuartaEtapa = "período para oferta encerrado" 
-              %>
-
-              <div id="etapas">
-                  <% if ((posIndicador == 4) & (haOferta2 == 0)) { %>
-                      <div class="etapa">
-                          <div id="etapa1" class="etapa-indicador-inativo">
-                          </div>
-                          <span id="label1" class="label-indicador-inativo"><%= labelPrimeraEtapa %></span>
-                      </div>
-                      <div id="linha1" class="linha-inativa">
-                      </div>
-                  <% } else { %>
-                      <% if (posIndicador == 1) { %>
-                          <div class="etapa">
-                              <div id="etapa1" class="etapa-indicador-presente">
-                              </div>
-                              <span id="label1" class="label-indicador-presente"><%= labelPrimeraEtapa %></span>
-                          </div>
-                          <div id="linha1" class="linha-futuro">
-                          </div>
-                      <% } else { 
-                              if (posIndicador < 1) { %>
-                                  <div class="etapa">
-                                      <div id="etapa1" class="etapa-indicador-futuro">
-                                      </div>
-                                      <span id="label1" class="label-indicador-futuro"><%= labelPrimeraEtapa %></span>
-                                  </div>
-                                  <div id="linha1" class="linha-futuro">
-                                  </div>
-                              <% } else { %>
-                                  <div class="etapa">
-                                      <div id="etapa1" class="etapa-indicador-presente">
-                                      </div>
-                                      <span id="label1" class="label-indicador-presente"><%= labelPrimeraEtapa %></span>
-                                  </div>
-                                  <div id="linha1" class="linha-presente">
-                                  </div>
-                              <% } %>
-                      <% } %>
-                  <% } %>
-
-                  <% if ((posIndicador == 4) & (haOferta2 == 0)) { %>
-                      <div class="etapa">
-                          <div id="etapa2" class="etapa-indicador-inativo">
-                          </div>
-                          <span id="label2" class="label-indicador-inativo"><%= labelSegundaEtapa %></span>
-                      </div>
-                      <div id="linha2" class="linha-inativa">
-                      </div>
-                  <% } else { %>
-                      <% if (posIndicador == 2) { %>
-                          <div class="etapa">
-                              <div id="etapa2" class="etapa-indicador-presente">
-                              </div>
-                              <span id="label2" class="label-indicador-presente"><%= labelSegundaEtapa %></span>
-                          </div>
-                          <div id="linha2" class="linha-futuro">
-                          </div>
-                      <% } else {
-                          if (posIndicador < 2) { %>
-                              <div class="etapa">
-                                  <div id="etapa2" class="etapa-indicador-futuro">
-                                  </div>
-                                  <span id="label2" class="label-indicador-futuro"><%= labelSegundaEtapa %></span>
-                              </div>
-                              <div id="linha2" class="linha-futuro">
-                              </div>
-                          <% } else { %>
-                              <div class="etapa">
-                                  <div id="etapa2" class="etapa-indicador-presente">
-                                  </div>
-                                  <span id="label2" class="label-indicador-presente"><%= labelSegundaEtapa %></span>
-                              </div>
-                              <div id="linha2" class="linha-presente">
-                              </div>
-                          <% } %>
-                      <% } %>
-                  <% } %>
-
-                  <% if ((posIndicador == 4) & (haOferta2 == 0)) { %>
-                      <div class="etapa">
-                          <div id="etapa3" class="etapa-indicador-inativo">
-                          </div>
-                          <span id="label3" class="label-indicador-inativo">oferta<br>enviada</span>
-                      </div>
-                  <% } else { %>
-                      <% if (posIndicador == 3) { %>
-                          <div class="etapa">
-                              <div id="etapa3" class="etapa-indicador-presente">
-                              </div>
-                              <span id="label3" class="label-indicador-presente">oferta<br>enviada</span>
-                          </div>
-                          <!--<div id="linha3" class="linha-futuro">
-                          </div>-->
-                      <% } else { 
-                            if (posIndicador < 3) { %>
-                                <div class="etapa">
-                                    <div id="etapa3" class="etapa-indicador-futuro">
-                                    </div>
-                                    <span id="label3" class="label-indicador-futuro">oferta<br>enviada</span>
-                                </div>
-                                <!--<div id="linha3" class="linha-futuro">
-                                </div>-->
-                            <% } else { %>
-                                <div class="etapa">
-                                    <div id="etapa3" class="etapa-indicador-presente">
-                                    </div>
-                                    <span id="label3" class="label-indicador-presente">oferta<br>enviada</span>
-                                </div>
-                                <!--<div id="linha3" class="linha-presente">
-                                </div>-->
-                            <% } %>
-                      <% } %>
-                  <% } %>
-
-                  <!--<% if (posIndicador == 4) { %>
-                      <div class="etapa">
-                          <div id="etapa4" class="etapa-indicador-presente">
-                          </div>
-                          <span id="label4" class="label-indicador-presente"><%= labelQuartaEtapa %></span>
-                      </div>
-                  <% } else { 
-                       if (posIndicador < 4) { %>
-                          <div class="etapa">
-                              <div id="etapa4" class="etapa-indicador-futuro">
-                              </div>
-                              <span id="label4" class="label-indicador-futuro"><%= labelQuartaEtapa %></span>
-                          </div>
-                      <% } else { %>
-                          <div class="etapa">
-                              <div id="etapa4" class="etapa-indicador-presente">
-                              </div>
-                              <span id="label4" class="label-indicador-presente"><%= labelQuartaEtapa %></span>
-                          </div>
-                      <% } %>
-                  <% } %>-->
-
-              </div>
-              
-            </div>
-    
-        <div id="container-pedido">
-
-            <p>
-              Ciclo <%= ciclo.nome  %></e>
-            </p>
-
-            <% if (posIndicador == 0) { %>
-              <p>ofertas poderão ser enviadas a partir de
-                <% 
-                      if (ciclo.ofertaInicio) { %>&nbsp;<%=
-                        ciclo.ofertaInicio.toISOString().substr(8,2)%>/<%=
-                        ciclo.ofertaInicio.toISOString().substr(5,2)%>/<%=
-                        ciclo.ofertaInicio.toISOString().substr(0,4)%> <%=
-                        ciclo.ofertaInicio.toISOString().substr(11,5)%>h
-                  <% } %> 
-              </p>
-            <% } else { %>
-              <% if (posIndicador == 4) { %>
-                <p>período para ofertas encerrado</p>
-              <% } else { %> 
-                  <p>ofertas podem ser enviadas até
-                    <% 
-                        if (ciclo.ofertaFim) { %>&nbsp;<%=
-                          ciclo.ofertaFim.toISOString().substr(8,2)%>/<%=
-                          ciclo.ofertaFim.toISOString().substr(5,2)%>/<%=
-                          ciclo.ofertaFim.toISOString().substr(0,4)%> <%=
-                          ciclo.ofertaFim.toISOString().substr(11,5)%>h
-                    <% } %> 
-                  </p>
-              <% }} %> 
-
-
-            <% if (haOferta2 == 1) { %>
-                <p>
-                  Produtos ofertados por você:
-                </p>
-            <% } else { %>
-                <p>
-                  Não há produtos ofertados por você
-                </p>
-            <% } %>
-
-
-            <!-- lista de produtos registrados-->
-            
-            <div id="lista-pedidos">
-                <%  
-                  let haOferta = 0
-                  let msgOferta = ""
-                  produtosOfertaDados.forEach(produtoOfertaDados => {
-
-                  if (produtoOfertaDados.quantidade > 0) {
-                  haOferta = 1
-                %>           
-                    <div class="pedido">
-                        <span class="pedido-nome-medida">
-                          <%= produtoOfertaDados.nome %> (<%= produtoOfertaDados.medida %>)
-                        </span>
-                        <span class="pedido-preco">
-                          R$ <%= produtoOfertaDados.valorReferencia.toFixed(2).replace('.',',' ) %>
-                        </span> 
-                        <span class="pedido-quantidade">
-                          <%= produtoOfertaDados.quantidade %>
-                        </span>
-                        <form id="form-apagarProduto"
-                            method="POST"
-                            action="/ofertaapagarproduto">
-                            <input 
-                                type="hidden"
-                                id= "cicloId"
-                                name= "cicloId"
-                                value="<%= ciclo.id %>"
-                            />
-                            <input 
-                                type="hidden"
-                                id= "usuarioOfertaId"
-                                name= "usuarioOfertaId"
-                                value="<%= usuarioOferta.id %>"
-                            />
-                              <span class="pedido-botaoapagar">
-                                <button id="submit" type="submit" class="btn btn-block"
-                                    form="form-apagarProduto"
-                                    type="submit"
-                                    id= "apagarproduto"
-                                    name="ofertaproduto"
-                                    value="<%= produtoOfertaDados.id %>">
-                                    <img src="/images/trash-24.svg" alt="apagar produto" />
-                                </button>
-                              </span>
-                        </form>
-                    </div>
-                  <% } %>
-              <% }) %>
-
-            </div>
-            <span id="posicao-subir-lista-produtos"></span>
-            <br><br>
-            
-        </div>
-
-        <!--<a href="#oferta-produtos"></a>-->
-        <div id="container-produtos">
-
-            <!--<h4 style="color:black;"> Oferta de Produtos</h4>-->
-        
-            <form id="form-ofertaProdutos"
-                method="POST"
-                action="/ofertasave">
-                <p>Selecione o produto e quantidade de sua oferta:</p>  
-                
-                <input class="form-control" id="searchProduto" type="text" placeholder="Digite o nome do produto..">
-                <br>
-                
-                <input 
-                    type="hidden"
-                    id= "ofertaId"
-                    name= "ofertaId"
-                    value="<%= oferta.id %>"
-                />
-                
-                <input 
-                      type="hidden"
-                      id= "cicloId"
-                      name= "cicloId"
-                      value="<%= ciclo.id %>"
-                />
-                
-                <input 
-                    type="hidden"
-                    id= "usuarioOfertaId"
-                    name= "usuarioOfertaId"
-                    value="<%= usuarioOferta.id %>"
-                />
-
-                <!--<e% produtosOfertaDados.forEach(produtoOfertaDados => {
-                    let nomeInput = 'quant' + produtoOfertaDados.id.toString()
-                %>
-
-                <input 
-                    type="hidden"
-                    id="nomeInput"
-                    name="nomeInput"
-                    value=""
-                />
-
-                <e% }) %>-->
-      
-                <% let indicadorOrigemProdutos = 0 %>
-                <div id="lista-produtos">
-                        <%
-                          index = 0
-                          let nomeInput = ''
-                          produtos.forEach(produto => {
-                          index += 1
-                          nomeInput = 'quantidade' + produto.id.toString()
-                        %>
-
-                           <% if (indicadorOrigemProdutos == 0) { %>
-
-                              <% if (produto.origemProduto == 'maisOfertados') {
-                                indicadorOrigemProdutos = 1 %>
-                                <p class="rotulo-lista-produtos">
-                                  Produtos recentemente ofertados:
-                                </p>
-                          <% }} %>
-
-                          <% if (indicadorOrigemProdutos <= 1) { %>
-                            <% if (produto.origemProduto == 'restantes') {
-                                indicadorOrigemProdutos = 2 %>
-                            <br><p class="rotulo-lista-produtos">
-                              Demais produtos:
-                            </p>
-                          <% }}%>
-                        
-                            <div class="produto">
-                                <span class="produto-nome text-normal" id="">
-                                  <%= produto.nome %>
-                                </span>
-                                <span class="produto-categoria text-small">
-                                  <%= produto.categoria %>
-                                </span>
-                                <span class="produto-medida text-normal">
-                                  <%= produto.medida %>
-                                </span>
-                                <span class="produto-labelmedida text-small">
-                                  medida
-                                </span>
-                                <span class="produto-preco text-normal">
-                                  R$ <%= produto.valorReferencia.toFixed(2).replace('.',',' ) %>
-                                </span>
-                                <span class="produto-labelpreco text-small">
-                                  preço
-                                </span>
-                                <span class="produto-descricao text-small">
-                                  <%= produto.descricao %>
-                                </span>
-                                <div class="produto-quantidade">
-                                    <input class="inputmenor"
-                                          type="number"
-                                          id= "<%= nomeInput %>"
-                                          name="<%= nomeInput %>"
-                                          style="min-width: 60px"
-                                          value="<%= produto.quantidade %>"
-                                    />
-                                </div>
-                              <!--<button id="submit" type="submit" class="btn btn-default btn-success btn-block"><span class="glyphicon glyphicon-plus"></span></button>-->
-                            </div>
-                    <% }) %>
-                </div>
-            </form>
-            
-        </div>
-
-        <div id="container-compensa-rodape"></div>
-
-        <div id="container-rodape" class="fixed-bottom">
-
-          <div id="rodape-fornecedor">
-
-            <div id="botoes">
-                  <button 
-                  class="button green" 
-                  form="form-ofertaProdutos"
-                  type="submitSalvar" 
-                  id= "submitSalvar"
-                  title="Enviar Oferta">Enviar oferta</button>
-                  <% if (posIndicador == 4) { %>
-                    <button 
-                        class="button green"
-                        type="submitMostrarProdutos"
-                        id= "submitMostrarProdutos"
-                        title="Realizar acerto">Realizar acerto após período oferta</button>
-                  <% } else { 
-                       if (posIndicador == 3) { %>
-                        <button 
-                            class="button green"
-                            type="submitMostrarProdutos"
-                            id= "submitMostrarProdutos"
-                            title="Alterar oferta">Alterar oferta</button>
-                        <% } else {
-                          if (posIndicador == 1) { %>
-                            <button 
-                              class="button green"
-                              type="submitMostrarProdutos"
-                              id= "submitMostrarProdutos"
-                              title="Iniciar oferta">Iniciar oferta</button>
-                      <% }}} %>
-              </div>
-
+        <div class="progress-steps" role="progressbar" aria-valuenow="<%= posIndicador %>" aria-valuemin="0" aria-valuemax="3">
+          <div class="progress-line">
+            <div class="progress-line-fill" style="width: <%= (posIndicador / 3) * 100 %>%"></div>
           </div>
 
-          <!--<div id="rodape-admin">
+          <div class="step <%= posIndicador >= 0 ? 'active' : '' %>">
+            <div class="step-circle <%= posIndicador > 0 ? 'completed' : posIndicador === 0 ? 'active' : '' %>">
+              <%= posIndicador > 0 ? '✓' : '1' %>
+            </div>
+            <span class="step-label">Período Iniciado</span>
+          </div>
 
-                      <%  if ( usuarioAtivo.perfil) {
-                          if ( usuarioAtivo.perfil.indexOf('admin') >= 0 ) { %>  
-                              <div id="selecaoUsuario" class="input-wrapper">
-                                <div class="dropdown">
-                                  <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Alterar fornecedor
-                                  <span class="caret"></span></button>
-                                  <ul class="dropdown-menu">
-                                    <input class="form-control" id="searchUsuario" type="text" placeholder="Busque o fornecedor..">
-                                        <% usuarios.forEach(usuario => { %>
-                                          <li><a href="?usr=<%= usuario.id %>"><%= usuario.nome %></a></li>
-                                        <% }) %>
-                                  </ul>
-                                </div>
-                              </div>
-                      <% }} %>
+          <div class="step <%= posIndicador >= 1 ? 'active' : '' %>">
+            <div class="step-circle <%= posIndicador > 1 ? 'completed' : posIndicador === 1 ? 'active' : '' %>">
+              <%= posIndicador > 1 ? '✓' : '2' %>
+            </div>
+            <span class="step-label">Seleção Produtos</span>
+          </div>
 
-          </div>-->
+          <div class="step <%= posIndicador >= 2 ? 'active' : '' %>">
+            <div class="step-circle <%= posIndicador > 2 ? 'completed' : posIndicador === 2 ? 'active' : '' %>">
+              <%= posIndicador > 2 ? '✓' : '3' %>
+            </div>
+            <span class="step-label">Oferta Enviada</span>
+          </div>
 
+          <div class="step <%= posIndicador >= 3 ? 'active' : '' %>">
+            <div class="step-circle <%= posIndicador === 3 ? 'active' : '' %>">
+              4
+            </div>
+            <span class="step-label">Encerrado</span>
+          </div>
         </div>
 
-
-
-</main>
+        <% if (posIndicador === 0) { %>
+          <div class="alert alert-info" role="status">
+            <span>ℹ️</span>
+            <span>Ofertas poderão ser enviadas a partir de <strong><%= ciclo.ofertaInicio.toISOString().substr(8,2) %>/<%= ciclo.ofertaInicio.toISOString().substr(5,2) %>/<%= ciclo.ofertaInicio.toISOString().substr(0,4) %> às <%= ciclo.ofertaInicio.toISOString().substr(11,5) %>h</strong></span>
+          </div>
+        <% } else if (posIndicador === 3) { %>
+          <div class="alert alert-warning" role="status">
+            <span>⏰</span>
+            <span>Período para ofertas encerrado</span>
+          </div>
+        <% } else { %>
+          <div class="alert alert-success" role="status">
+            <span>✅</span>
+            <span>Ofertas podem ser enviadas até <strong><%= ciclo.ofertaFim.toISOString().substr(8,2) %>/<%= ciclo.ofertaFim.toISOString().substr(5,2) %>/<%= ciclo.ofertaFim.toISOString().substr(0,4) %> às <%= ciclo.ofertaFim.toISOString().substr(11,5) %>h</strong></span>
+          </div>
+        <% } %>
       </div>
+
+      <% if (haOferta) { %>
+        <div class="summary-card">
+          <div class="summary-stat">
+            <div>
+              <div class="summary-number" id="totalOffered"><%= produtosOfertaDados.filter(p => p.quantidade > 0).length %></div>
+              <div class="summary-label">Produtos Ofertados</div>
+            </div>
+          </div>
+
+          <div class="offered-list" id="offeredList">
+            <% produtosOfertaDados.forEach(produto => {
+              if (produto.quantidade > 0) { %>
+                <div class="offered-item">
+                  <span class="offered-item-name"><%= produto.nome %> (<%= produto.medida %>)</span>
+                  <span class="offered-item-qty"><%= produto.quantidade %></span>
+                  <form method="POST" action="/ofertaapagarproduto" style="margin: 0;">
+                    <input type="hidden" name="cicloId" value="<%= ciclo.id %>">
+                    <input type="hidden" name="usuarioOfertaId" value="<%= usuarioOferta.id %>">
+                    <button type="submit" name="ofertaproduto" value="<%= produto.id %>" class="remove-btn" title="Remover produto" aria-label="Remover <%= produto.nome %>">
+                      ✕
+                    </button>
+                  </form>
+                </div>
+              <% }
+            }) %>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="alert alert-info">
+          <span>��</span>
+          <span>Você ainda não possui produtos ofertados neste ciclo</span>
+        </div>
+      <% } %>
+
+      <% if (posIndicador >= 1 && posIndicador < 4) { %>
+        <form id="form-ofertaProdutos" method="POST" action="/ofertasave">
+          <input type="hidden" name="ofertaId" value="<%= oferta.id %>">
+          <input type="hidden" name="cicloId" value="<%= ciclo.id %>">
+          <input type="hidden" name="usuarioOfertaId" value="<%= usuarioOferta.id %>">
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">🛒 Selecione os Produtos</h3>
+            </div>
+
+            <div class="search-box">
+              <span class="search-icon" aria-hidden="true">🔍</span>
+              <input
+                type="text"
+                id="searchProduto"
+                class="search-input"
+                placeholder="Digite o nome do produto para filtrar..."
+                aria-label="Buscar produtos"
+              >
+            </div>
+
+            <%
+              let todosProdutos = produtos || []
+              let maisOfertados = todosProdutos.filter(p => p.origemProduto === 'maisOfertados')
+              let restantes = todosProdutos.filter(p => !p.origemProduto || p.origemProduto === 'restantes')
+
+              if (maisOfertados.length === 0 && restantes.length === 0) {
+                restantes = todosProdutos
+              }
+            %>
+
+            <% if (maisOfertados.length > 0) { %>
+              <h4 class="section-title">⭐ Produtos Recentemente Ofertados</h4>
+              <div class="product-grid">
+                <% maisOfertados.forEach(produto => { %>
+                  <div class="product-card" data-product-id="<%= produto.id %>">
+                    <div class="product-name"><%= produto.nome %></div>
+                    <% if (produto.categoria) { %>
+                      <div class="product-category"><%= produto.categoria %></div>
+                    <% } %>
+                    <% if (produto.descricao) { %>
+                      <div class="product-description"><%= produto.descricao %></div>
+                    <% } %>
+                    <div class="product-info">
+                      <div class="product-price-info">
+                        <div class="product-price">R$ <%= produto.valorReferencia.toFixed(2).replace('.', ',') %></div>
+                        <div class="product-unit">por <%= produto.medida %></div>
+                      </div>
+                      <div class="quantity-control">
+                        <button type="button" class="quantity-btn" onclick="decreaseQuantity(<%= produto.id %>)" aria-label="Diminuir quantidade">−</button>
+                        <input
+                          type="number"
+                          class="quantity-input"
+                          id="quantidade<%= produto.id %>"
+                          name="quantidade<%= produto.id %>"
+                          value="<%= produto.quantidade %>"
+                          min="0"
+                          onchange="updateProductCard(<%= produto.id %>, this.value); updateTotalCount()"
+                          aria-label="Quantidade de <%= produto.nome %>"
+                        />
+                        <button type="button" class="quantity-btn" onclick="increaseQuantity(<%= produto.id %>)" aria-label="Aumentar quantidade">+</button>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+              <hr class="section-divider">
+            <% } %>
+
+            <% if (restantes.length > 0) { %>
+              <h4 class="section-title">📦 Demais Produtos</h4>
+              <div class="product-grid">
+                <% restantes.forEach(produto => { %>
+                  <div class="product-card" data-product-id="<%= produto.id %>">
+                    <div class="product-name"><%= produto.nome %></div>
+                    <% if (produto.categoria) { %>
+                      <div class="product-category"><%= produto.categoria %></div>
+                    <% } %>
+                    <% if (produto.descricao) { %>
+                      <div class="product-description"><%= produto.descricao %></div>
+                    <% } %>
+                    <div class="product-info">
+                      <div class="product-price-info">
+                        <div class="product-price">R$ <%= produto.valorReferencia.toFixed(2).replace('.', ',') %></div>
+                        <div class="product-unit">por <%= produto.medida %></div>
+                      </div>
+                      <div class="quantity-control">
+                        <button type="button" class="quantity-btn" onclick="decreaseQuantity(<%= produto.id %>)" aria-label="Diminuir quantidade">−</button>
+                        <input
+                          type="number"
+                          class="quantity-input"
+                          id="quantidade<%= produto.id %>"
+                          name="quantidade<%= produto.id %>"
+                          value="<%= produto.quantidade %>"
+                          min="0"
+                          onchange="updateProductCard(<%= produto.id %>, this.value); updateTotalCount()"
+                          aria-label="Quantidade de <%= produto.nome %>"
+                        />
+                        <button type="button" class="quantity-btn" onclick="increaseQuantity(<%= produto.id %>)" aria-label="Aumentar quantidade">+</button>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </form>
+      <% } %>
     </div>
 
+    <% if (posIndicador >= 1 && posIndicador < 4) { %>
+      <div class="bottom-bar">
+        <div class="bottom-bar-content">
+          <div class="total-info">
+            <span>Total de produtos: </span>
+            <span class="total-number" id="totalCount">0</span>
+          </div>
+          <button type="submit" form="form-ofertaProdutos" class="btn btn-primary btn-success" id="submitBtn">
+            <span>📤</span>
+            <span>Enviar Oferta</span>
+          </button>
+        </div>
+      </div>
+    <% } %>
+
+    <script>
+      function replaceSpecialChars(str) {
+        if (!str) return ''
+        return str.toString()
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+      }
+
+      const searchUsuario = document.getElementById('searchUsuario')
+      if (searchUsuario) {
+        searchUsuario.addEventListener('keyup', function() {
+          const value = replaceSpecialChars(this.value)
+          const items = document.querySelectorAll('.dropdown-item')
+          items.forEach(item => {
+            const text = replaceSpecialChars(item.textContent)
+            item.style.display = text.includes(value) ? 'block' : 'none'
+          })
+        })
+      }
+
+      const searchProduto = document.getElementById('searchProduto')
+      if (searchProduto) {
+        searchProduto.addEventListener('keyup', function() {
+          const value = replaceSpecialChars(this.value)
+          const products = document.querySelectorAll('.product-card')
+          products.forEach(product => {
+            const text = replaceSpecialChars(product.textContent)
+            product.style.display = text.includes(value) ? 'flex' : 'none'
+          })
+        })
+      }
+
+      function toggleDropdown() {
+        const dropdown = document.getElementById('userDropdown')
+        if (dropdown) {
+          dropdown.classList.toggle('active')
+        }
+      }
+
+      document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('userDropdown')
+        if (dropdown && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('active')
+        }
+      })
+
+      function updateTotalCount() {
+        const inputs = document.querySelectorAll('.quantity-input')
+        let total = 0
+        inputs.forEach(input => {
+          const value = parseInt(input.value) || 0
+          if (value > 0) total++
+        })
+        const totalElement = document.getElementById('totalCount')
+        if (totalElement) {
+          totalElement.textContent = total
+        }
+      }
+
+      function decreaseQuantity(productId) {
+        const input = document.getElementById('quantidade' + productId)
+        const currentValue = parseInt(input.value) || 0
+        if (currentValue > 0) {
+          input.value = currentValue - 1
+          updateProductCard(productId, currentValue - 1)
+          updateTotalCount()
+        }
+      }
+
+      function increaseQuantity(productId) {
+        const input = document.getElementById('quantidade' + productId)
+        const currentValue = parseInt(input.value) || 0
+        input.value = currentValue + 1
+        updateProductCard(productId, currentValue + 1)
+        updateTotalCount()
+      }
+
+      function updateProductCard(productId, quantity) {
+        const card = document.querySelector(`[data-product-id="${productId}"]`)
+        if (card) {
+          if (quantity > 0) {
+            card.classList.add('has-quantity')
+          } else {
+            card.classList.remove('has-quantity')
+          }
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        updateTotalCount()
+
+        const inputs = document.querySelectorAll('.quantity-input')
+        inputs.forEach(input => {
+          const productId = input.id.replace('quantidade', '')
+          const value = parseInt(input.value) || 0
+          updateProductCard(productId, value)
+        })
+      })
+
+      <% if (loadAposSalvar == 1) { %>
+        alert('✅ Parabéns! Sua oferta foi enviada com sucesso.')
+      <% } %>
+
+      // AJAX - Busca em tempo real
+      const searchInput = document.getElementById('searchProduto')
+      let searchTimeout
+
+      if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+          clearTimeout(searchTimeout)
+          const termo = e.target.value.trim()
+
+          searchTimeout = setTimeout(() => {
+            filtrarProdutosLocal(termo)
+          }, 300)
+        })
+      }
+
+      function filtrarProdutosLocal(termo) {
+        const cards = document.querySelectorAll('.product-card')
+        const termoLower = termo.toLowerCase()
+
+        cards.forEach(card => {
+          const nome = card.querySelector('.product-name')?.textContent.toLowerCase() || ''
+          const categoria = card.querySelector('.product-category')?.textContent.toLowerCase() || ''
+
+          if (nome.includes(termoLower) || categoria.includes(termoLower) || termo === '') {
+            card.style.display = 'block'
+          } else {
+            card.style.display = 'none'
+          }
+        })
+      }
+
+      // AJAX - Atualizar quantidade sem reload
+      const quantityInputs = document.querySelectorAll('.quantity-input')
+      let updateTimeout = {}
+
+      quantityInputs.forEach(input => {
+        input.addEventListener('change', async function() {
+          const produtoId = this.id.replace('quantidade', '')
+          const quantidade = parseInt(this.value) || 0
+
+          await atualizarQuantidadeAjax(produtoId, quantidade)
+        })
+      })
+
+      const incrementButtons = document.querySelectorAll('.quantity-btn[onclick*="changeQuantity"]')
+      incrementButtons.forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+          const inputId = this.getAttribute('onclick').match(/'([^']+)'/)[1]
+          const input = document.getElementById(inputId)
+
+          setTimeout(async () => {
+            const produtoId = inputId.replace('quantidade', '')
+            const quantidade = parseInt(input.value) || 0
+            await atualizarQuantidadeAjax(produtoId, quantidade)
+          }, 100)
+        })
+      })
+
+      async function atualizarQuantidadeAjax(produtoId, quantidade) {
+        try {
+          const data = await OfertaService.atualizarQuantidade(
+            produtoId,
+            quantidade,
+            <%= oferta.id %>
+          )
+
+          if (data.success) {
+            updateProductCard(produtoId, quantidade)
+            updateTotalCount()
+            await atualizarPainelOfertados()
+            Feedback.success('✅ Quantidade atualizada!')
+          } else {
+            Feedback.error('❌ Erro ao atualizar quantidade')
+          }
+        } catch (error) {
+          console.error('Erro ao atualizar quantidade:', error)
+          Feedback.error('❌ Erro de conexão')
+        }
+      }
+
+      async function atualizarPainelOfertados() {
+        try {
+          const data = await OfertaService.obterProdutosOferta(<%= oferta.id %>)
+
+          if (data.success) {
+            const produtosOfertados = data.produtos.filter(p => p.quantidade > 0)
+
+            const totalOffered = document.getElementById('totalOffered')
+            if (totalOffered) {
+              totalOffered.textContent = produtosOfertados.length
+            }
+
+            const offeredList = document.getElementById('offeredList')
+            if (offeredList) {
+              offeredList.innerHTML = ''
+
+              produtosOfertados.forEach(produto => {
+                const itemDiv = document.createElement('div')
+                itemDiv.className = 'offered-item'
+                itemDiv.innerHTML = `
+                  <span class="offered-item-name">${produto.nome} (${produto.medida})</span>
+                  <span class="offered-item-qty">${produto.quantidade}</span>
+                  <form method="POST" action="/ofertaapagarproduto" style="margin: 0;">
+                    <input type="hidden" name="cicloId" value="<%= ciclo.id %>">
+                    <input type="hidden" name="usuarioOfertaId" value="<%= usuarioOferta.id %>">
+                    <button type="submit" name="ofertaproduto" value="${produto.id}" class="remove-btn" title="Remover produto" aria-label="Remover ${produto.nome}">
+                      ✕
+                    </button>
+                  </form>
+                `
+                offeredList.appendChild(itemDiv)
+              })
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao atualizar painel de ofertados:', error)
+        }
+      }
+
+    </script>
   </body>
-
-  <!-- Modal -->
-<div class="modal fade" id="modalMensagem" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Oferta</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        Parabéns! Sua oferta foi enviada com sucesso.
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-        <!--<button type="button" class="btn btn-primary">Salvar mudanças</button>-->
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
 </html>
- 
