@@ -40,6 +40,8 @@ const ProfileController = require("./controllers/ProfileController");
 
 const RelatorioController = require("./controllers/RelatorioController");
 
+routes.use(express.json());
+
 // codigo que precisou no do myke - meu não deu mesmo erro
 const views = __dirname + "/views/";
 
@@ -126,6 +128,17 @@ routes.post("/oferta", OfertaController.savePartial);
 routes.post("/ofertasave", OfertaController.save);
 routes.post("/ofertaapagarproduto", OfertaController.apagarProduto);
 //routes.post('/oferta/delete/:id', OfertaController.delete)
+
+// API Routes para AJAX
+routes.get("/api/produtos/buscar", OfertaController.buscarProdutos);
+routes.post(
+  "/api/oferta/atualizar-quantidade",
+  OfertaController.atualizarQuantidade,
+);
+routes.get(
+  "/api/oferta/:ofertaId/produtos",
+  OfertaController.obterProdutosOferta,
+);
 
 //routes.get('/composicao/:id', ComposicaoController.showCreateEdit)
 //routes.post('/composicao', ComposicaoController.savePartial)
