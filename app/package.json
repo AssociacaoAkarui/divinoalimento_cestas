@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon .",
-    "test": "npx cucumber"
+    "test": "npx cucumber",
+    "test:unit": "mocha tests/unit/**/*.test.js",
+    "test:ui": "npx cucumber features/oferta-ui.feature",
+    "test:all": "npm run test:unit && npm run test"
   },
   "keywords": [],
   "author": "",
@@ -30,7 +33,11 @@
     "@cucumber/cucumber": "^12.2.0",
     "@faker-js/faker": "^10.0.0",
     "chai": "^4.3.6",
+    "jsdom": "^27.2.0",
+    "mocha": "^11.7.5",
     "nodemon": "^3.1.10",
+    "puppeteer": "^24.30.0",
+    "sinon": "^21.0.0",
     "sqlite3": "^5.0.2"
   }
 }
