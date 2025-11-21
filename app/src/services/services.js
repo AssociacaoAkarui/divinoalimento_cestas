@@ -172,11 +172,35 @@ class CicloService {
     const { count, rows } = await Ciclo.findAndCountAll({
       where,
       limit: limite,
-      include: [{ model: PontoEntrega, as: "pontoEntrega" }],
+      include: [
+        { model: PontoEntrega, as: "pontoEntrega" },
+        { model: CicloCestas, as: "CicloCestas" },
+      ],
       order: [["createdAt", "DESC"]],
     });
+
+    // Adicionar IDs dos CicloCestas auxiliares a cada ciclo
+    const ciclosComCestas = rows.map((ciclo) => {
+      const cicloJson = ciclo.toJSON();
+      const cicloCestas = cicloJson.CicloCestas || [];
+
+      // Buscar CicloCesta com cestaId=1 (Itens Adicionais Oferta)
+      const cicloCestaOfertas = cicloCestas.find((cc) => cc.cestaId === 1);
+      cicloJson.cicloCestaOfertas_1 = cicloCestaOfertas
+        ? cicloCestaOfertas.id
+        : "";
+
+      // Buscar CicloCesta com cestaId=5 (Pedidos Adicionais)
+      const cicloCestaPedidos = cicloCestas.find((cc) => cc.cestaId === 5);
+      cicloJson.cicloCestaPedidosExtras_5 = cicloCestaPedidos
+        ? cicloCestaPedidos.id
+        : "";
+
+      return cicloJson;
+    });
+
     const nextCursor = rows.length > 0 ? rows[rows.length - 1].createdAt : null;
-    return { total: count, ciclos: rows, limite, nextCursor };
+    return { total: count, ciclos: ciclosComCestas, limite, nextCursor };
   }
 
   async deletarCiclo(cicloId, options = {}) {
