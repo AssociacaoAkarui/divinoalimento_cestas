@@ -1071,3 +1071,65 @@ rake vivo:restart
   - [ ] `ciclo.ejs` - Média prioridade
 
 ---
+
+### 2025-11-21 | Limpeza de Código e Remoção de Arquivos Obsoletos
+
+**Objetivo:** Remover arquivos antigos, features não utilizadas e limpar referências no código.
+
+#### 🗑️ Arquivos Removidos
+
+**Controllers e Views:**
+- `LimiteSolarController.js` e `limitesolar.ejs` - Feature não utilizada
+- `ProfileController.js` e `profile.ejs` - Feature não utilizada
+
+**CSS:**
+- `limitesolar.css` - CSS órfão sem view correspondente
+
+**Backups antigos:**
+- `oferta copy.ejs`
+- `oferta_bk20230306.ejs`
+- `old_pedidosFornecedoresTodos.ejs`
+
+**Código obsoleto:**
+- `produtoSql_30112022.js` - Código antigo não utilizado
+
+#### 🔧 Alterações em routes.js
+
+**Imports removidos:**
+- `LimiteSolarController`
+- `ProfileController`
+- Objeto `profile` (não utilizado)
+
+**Rotas removidas:**
+- `GET /limitesolar` → LimiteSolarController.showIndex
+- `GET /profile` → ProfileController.index (duplicada)
+- `POST /profile` → ProfileController.update
+- `GET /profile` → inline render (duplicada)
+
+#### 📊 Estatísticas
+
+| Item | Valor |
+|------|-------|
+| Arquivos deletados | 10 |
+| Linhas removidas | 2.107 |
+| Controllers removidos | 2 |
+| Rotas removidas | 4 |
+| Imports limpos | 3 |
+
+#### ✅ Verificação de Impacto
+
+- ✅ Nenhuma referência ativa no código
+- ✅ Aplicação testada após remoções
+- ✅ Nenhum crash ou erro
+- ✅ Routes.js limpo e organizado
+
+#### 🎯 Benefícios
+
+- Codebase mais limpo e manutenível
+- Menos confusão com arquivos antigos
+- Routes.js mais legível
+- Redução de ~2.100 linhas de código morto
+
+**Commit:** `5780e57` - chore: remove arquivos obsoletos e rotas não utilizadas
+
+---

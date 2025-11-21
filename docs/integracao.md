@@ -51,7 +51,6 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 | 3 | `usuario-index.ejs` | `UsuarioIndexController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
 | 4 | `usuario-edit.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
 | 5 | `usuarionovo.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 6 | `profile.ejs` | `ProfileController`✅ | `Usuario`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### CICLOS
 
@@ -151,7 +150,6 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 | # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
 |---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
 | 45 | `cadastros.ejs` | N/A (estático) | N/A | N/A | N/A | ❌ | N/A | N/A | N/A |
-| 46 | `limitesolar.ejs` | `LimiteSolarController`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
@@ -161,15 +159,15 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 
 | Camada | Total | Implementado | Parcial | Pendente | % Completo |
 |--------|-------|--------------|---------|----------|------------|
-| **Views (EJS)** | 46 | 46 | 0 | 0 | 100% |
-| **Controllers** | 46 | 46 | 0 | 0 | 100% |
-| **Models DB** | 46 | 44 | 0 | 2 | 96% |
-| **Services Backend** | 46 | 2 | 0 | 44 | 4% |
-| **Features BDD** | 46 | 11 | 0 | 35 | 24% |
-| **CSS Modular** | 46 | 2 | 0 | 44 | 4% |
-| **JS Services** | 46 | 2 | 0 | 44 | 4% |
-| **Tests Unit** | 46 | 1 | 0 | 45 | 2% |
-| **Tests E2E** | 46 | 1 | 0 | 45 | 2% |
+| **Views (EJS)** | 44 | 44 | 0 | 0 | 100% |
+| **Controllers** | 44 | 44 | 0 | 0 | 100% |
+| **Models DB** | 44 | 42 | 0 | 2 | 95% |
+| **Services Backend** | 44 | 2 | 0 | 42 | 5% |
+| **Features BDD** | 44 | 11 | 0 | 33 | 25% |
+| **CSS Modular** | 44 | 2 | 0 | 42 | 5% |
+| **JS Services** | 44 | 2 | 0 | 42 | 5% |
+| **Tests Unit** | 44 | 1 | 0 | 43 | 2% |
+| **Tests E2E** | 44 | 1 | 0 | 43 | 2% |
 
 ### Modelos DB Existentes (20)
 
@@ -321,7 +319,7 @@ Para cada tela a ser modernizada, seguir:
 
 | Métrica | Atual | Meta | % |
 |---------|-------|------|---|
-| Views com CSS modular | 2 | 46 | 4% |
+| Views com CSS modular | 2 | 44 | 5% |
 | Views com JS modular | 2 | 15* | 13% |
 | Testes unitários JS | 30 | 100 | 30% |
 | Testes E2E | 10 | 50 | 20% |
@@ -358,7 +356,11 @@ Para cada tela a ser modernizada, seguir:
   - JS Service (pedidoConsumidores.service.js)
   - Progress steps, cards modernos, summary card
   - Integração com common.css e feedback.js
-- 📊 6 commits realizados (5 fixes + 1 refactor)
+- ✅ Limpeza de código e remoção de arquivos obsoletos
+  - Removidos LimiteSolarController e ProfileController
+  - Removidas rotas /limitesolar e /profile
+  - Removidos 10 arquivos obsoletos (~2.100 linhas)
+- 📊 10 commits realizados (5 fixes + 1 refactor + 3 docs + 1 chore)
 
 ---
 
