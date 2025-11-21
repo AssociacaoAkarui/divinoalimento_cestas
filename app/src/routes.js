@@ -2,7 +2,6 @@ const express = require("express");
 const routes = express.Router();
 
 const IndexController = require("./controllers/IndexController");
-const LimiteSolarController = require("./controllers/LimiteSolarController");
 
 const CicloController = require("./controllers/CicloController");
 const CicloIndexController = require("./controllers/CicloIndexController");
@@ -36,8 +35,6 @@ const PedidoConsumidoresController = require("./controllers/PedidoConsumidoresCo
 
 const RelatoriosController = require("./controllers/RelatoriosController");
 
-const ProfileController = require("./controllers/ProfileController");
-
 const RelatorioController = require("./controllers/RelatorioController");
 
 routes.use(express.json());
@@ -45,29 +42,12 @@ routes.use(express.json());
 // codigo que precisou no do myke - meu não deu mesmo erro
 const views = __dirname + "/views/";
 
-const profile = {
-  name: "Jack nova",
-  avatar:
-    "https://avatars.githubusercontent.com/u/17316392?s=460&u=6912a91a70bc89745a2079fdcdad3bc3ce370f13&v=4",
-  "monthly-budget": 3000,
-  "days-per-week": 5,
-  "hours-per-day": 5,
-  "vacation-per-year": 4,
-};
-
 const { requiresAuth } = require("express-openid-connect");
 
 //routes.get('/', (req, res) => {IndexController.showIndex(JSON.stringify(req.oidc.user))})
 
 routes.get("/", IndexController.showIndex);
 routes.get("/callback", IndexController.showIndex);
-
-routes.get("/limitesolar", LimiteSolarController.showIndex);
-
-routes.get("/profile", (req, res) => {
-  console.log(JSON.stringify(req.oidc.user));
-  res.send(JSON.stringify(req.oidc.user));
-});
 
 //routes.get('/', CicloIndexController.index)
 //routes.post('/callback', CicloIndexController.index)
@@ -216,15 +196,8 @@ routes.get(
   RelatoriosController.downloadEntregaCicloPDF,
 );
 
-routes.get("/profile", ProfileController.index);
-routes.post("/profile", ProfileController.update);
-
 // req, res
 routes.get("/cadastros", (req, res) => res.render(views + "cadastros"));
-//routes.get('/job-edit', (req, res) => res.render(views  + "job-edit"))
-routes.get("/profile", (req, res) =>
-  res.render(views + "profile", { profile }),
-);
 
 // Auth0
 
