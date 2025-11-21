@@ -1,50 +1,51 @@
-const db = require('../../models/index.js');
+const db = require("../../models/index.js");
 
 module.exports = {
+  async getQuantidadeComposicaoSobra(usuarioIdcicloIdprodutoId) {
+    composicaoSobra = await db.CicloCestas.findAll({
+      raw: true,
+      where: {
+        cicloId: usuarioIdcicloIdprodutoId.cicloId,
+        cestaId: 1,
+      },
+      include: [
+        {
+          model: db.Composicoes,
+          as: "cicloCesta",
+        },
+      ],
+    });
 
+    const composicaoItensAdicionais = composicaoSobra[0];
+    const composicaoSobraId = composicaoItensAdicionais["cicloCesta.id"];
 
-    async getQuantidadeComposicaoSobra(usuarioIdcicloIdprodutoId) {
-        
-        composicaoSobra = await db.CicloCestas.findAll ({
-            raw: true,
-            where: {
-                cicloId: usuarioIdcicloIdprodutoId.cicloId,
-                cestaId: 1
-            },  
-            include: [{
-                model: db.Composicoes,
-                as: 'cicloCesta',
-            }]
-        })
+    ofertaUsuario = await db.Oferta.findAll({
+      raw: true,
+      where: {
+        usuarioId: usuarioIdcicloIdprodutoId.usuarioId,
+        cicloId: usuarioIdcicloIdprodutoId.cicloId,
+      },
+      include: [
+        {
+          model: db.OfertaProdutos,
+          as: "ofertaProdutos",
+          where: {
+            produtoId: usuarioIdcicloIdprodutoId.produtoId,
+          },
+        },
+      ],
+    });
 
-        const composicaoItensAdicionais = composicaoSobra[0]
-        const composicaoSobraId = composicaoItensAdicionais['cicloCesta.id']
+    const ofertaUsuarioPorProduto = ofertaUsuario[0];
+    const ofertaProdutoId = ofertaUsuarioPorProduto["ofertaProdutos.id"];
+    console.log("ofertaUsuarioPorProduto", ofertaUsuarioPorProduto);
 
-        ofertaUsuario = await db.Oferta.findAll({
-            raw: true,
-            where: {
-                usuarioId: usuarioIdcicloIdprodutoId.usuarioId,
-                cicloId: usuarioIdcicloIdprodutoId.cicloId
-            },  
-            include: [{
-                model: db.OfertaProdutos,
-                as: 'ofertaProdutos',
-                where: {
-                    produtoId: usuarioIdcicloIdprodutoId.produtoId
-                },
-            }]
-        })
-
-        const ofertaUsuarioPorProduto = ofertaUsuario[0]
-        const ofertaProdutoId = ofertaUsuarioPorProduto['ofertaProdutos.id']
-        console.log('ofertaUsuarioPorProduto',ofertaUsuarioPorProduto)
-
-        /*pedidos = await db.ComposicaoOfertaProdutos.findAll({
+    /*pedidos = await db.ComposicaoOfertaProdutos.findAll({
             raw: true,
             where: {
                 composicaoId: composicaoSobraId,
                 ofertaProdutoId: ofertaProdutoId
-            },  
+            },
             include: [{
                 model: db.OfertaProdutos,
                 as: 'ofertaProduto',
@@ -54,145 +55,138 @@ module.exports = {
             }]
         })*/
 
+    pedidos = await db.ComposicaoOfertaProdutos.findAll({
+      raw: true,
+      where: {
+        composicaoId: composicaoSobraId,
+        ofertaProdutoId: ofertaProdutoId,
+      },
+    });
 
-        pedidos = await db.ComposicaoOfertaProdutos.findAll({
-            raw: true,
-            where: {
-                composicaoId: composicaoSobraId,
-                ofertaProdutoId: ofertaProdutoId
-            }
-        })
+    let totalPorProduto = 0;
+    for (let index = 0; index < pedidos.length; index++) {
+      const pedido = pedidos[index];
 
-        let totalPorProduto = 0
-        for (let index = 0; index < pedidos.length; index++) {
-            const pedido = pedidos[index];
+      totalPorProduto = totalPorProduto + Number(pedido.quantidade);
+    }
 
-            totalPorProduto = totalPorProduto + Number(pedido.quantidade)
-            
+    return totalPorProduto;
+  },
+
+  async getProdutosPorComposicao(composicaoId) {
+    produtosComposicao = await db.ComposicaoOfertaProdutos.findAll({
+      raw: true,
+      where: {
+        composicaoId: composicaoId.composicaoId,
+      },
+      order: ["id"],
+      include: [
+        {
+          model: db.OfertaProdutos,
+          as: "ofertaProduto",
+        },
+      ],
+    });
+
+    return produtosComposicao;
+  },
+
+  async getProdutosTodasComposicoes(cicloId) {
+    composicoes = await db.CicloCestas.findAll({
+      raw: true,
+      where: {
+        cicloId: cicloId,
+        cestaId: {
+          [db.Sequelize.Op.ne]: 1, // desconsidera a cesta 1, da lista de produtos que foram ofertados no extra
+        },
+      },
+      include: [
+        {
+          model: db.Composicoes,
+          as: "cicloCesta",
+        },
+      ],
+    });
+
+    console.log("_________________COMPOSICOES:", composicoes);
+
+    produtosTodasComposicoes = [];
+
+    for (let index = 0; index < composicoes.length; index++) {
+      const composicao = composicoes[index];
+
+      produtosComposicao = await db.ComposicaoOfertaProdutos.findAll({
+        raw: true,
+        where: {
+          composicaoId: composicao["cicloCesta.id"],
+        },
+        order: ["id"],
+        include: [
+          {
+            model: db.OfertaProdutos,
+            as: "ofertaProduto",
+          },
+        ],
+      });
+
+      console.log(
+        "_______________________________PRODUTOCOMPOSICAO",
+        produtosComposicao,
+      );
+
+      // Adiciona a coluna cicloId a cada linha retornada
+      produtosComposicao = produtosComposicao.map((produto) => ({
+        ...produto,
+        cicloId: cicloId, // Adiciona a nova propriedade cicloId
+      }));
+
+      produtosTodasComposicoes.push({
+        produtosComposicao,
+      });
+    }
+
+    produtosTransacionados = [];
+    produtosComposicao = [];
+
+    console.log(
+      "_______________________________produtosTODASCOMPOSICOES",
+      produtosTodasComposicoes,
+    );
+
+    for (let index = 0; index < produtosTodasComposicoes.length; index++) {
+      const { produtosComposicao } = produtosTodasComposicoes[index];
+
+      if (Array.isArray(produtosComposicao)) {
+        for (let index2 = 0; index2 < produtosComposicao.length; index2++) {
+          const produtoComposicao = produtosComposicao[index2];
+
+          produtosTransacionados.push({
+            nome: "produto_nome",
+            id: produtoComposicao["ofertaProduto.produtoId"],
+            cicloId: produtoComposicao.cicloId,
+            consumidor: "consumidor",
+            produtoId: produtoComposicao.id,
+            valorAcumuladoPedido: 0,
+            medida: "medida",
+            valorReferencia: 0,
+            quantidade: produtoComposicao.quantidade,
+          });
         }
-        
-        return totalPorProduto
+      } else {
+        console.log("produtosComposicao não é um array:", produtosComposicao);
+      }
+    }
 
-    },
+    console.log("_______________________________", produtosTransacionados);
 
+    // busca produtos comprados diretamente pelos consumidores
 
-
-    async getProdutosPorComposicao(composicaoId) {
-        
-                
-        produtosComposicao = await db.ComposicaoOfertaProdutos.findAll({
-            raw: true,
-            where: {
-                composicaoId: composicaoId.composicaoId
-            },
-            order: ['id'],  
-            include: [{
-                model: db.OfertaProdutos,
-                as: 'ofertaProduto',
-            }]
-        })
-
-        return produtosComposicao
-
-    },
-
-    async getProdutosTodasComposicoes(cicloId) {
-
-
-        composicoes = await db.CicloCestas.findAll ({
-            raw: true,
-            where: {
-                cicloId: cicloId,
-                cestaId: {
-                    [db.Sequelize.Op.ne]: 1 // desconsidera a cesta 1, da lista de produtos que foram ofertados no extra
-                }
-            },  
-            include: [{
-                model: db.Composicoes,
-                as: 'cicloCesta',
-            }]
-        })
-
-        console.log("_________________COMPOSICOES:",composicoes)
-
-        produtosTodasComposicoes = []
-        
-        for (let index = 0; index < composicoes.length; index++) {
-            const composicao = composicoes[index];
-
-            produtosComposicao = await db.ComposicaoOfertaProdutos.findAll({
-                raw: true,
-                where: {
-                    composicaoId: composicao['cicloCesta.id']
-                },
-                order: ['id'],  
-                include: [{
-                    model: db.OfertaProdutos,
-                    as: 'ofertaProduto',
-                }]
-            })
-
-            console.log("_______________________________PRODUTOCOMPOSICAO", produtosComposicao)
-
-            // Adiciona a coluna cicloId a cada linha retornada
-            produtosComposicao = produtosComposicao.map(produto => ({
-                ...produto,
-                cicloId: cicloId // Adiciona a nova propriedade cicloId
-            }));
-
-
-            produtosTodasComposicoes.push ({
-                produtosComposicao,
-            })
-
-
-
-
-        }
-
-        produtosTransacionados = []
-        produtosComposicao = []
-
-
-        console.log("_______________________________produtosTODASCOMPOSICOES", produtosTodasComposicoes)
-
-        for (let index = 0; index < produtosTodasComposicoes.length; index++) {
-            const { produtosComposicao } = produtosTodasComposicoes[index];
-
-            if (Array.isArray(produtosComposicao)) {
-                    for (let index2 = 0; index2 < produtosComposicao.length; index2++) {
-                        const produtoComposicao = produtosComposicao[index2];
-                        
-                            produtosTransacionados.push ({
-                                nome: "produto_nome",
-                                id: produtoComposicao['ofertaProduto.produtoId'],
-                                cicloId: produtoComposicao.cicloId,
-                                consumidor: 'consumidor',
-                                produtoId: produtoComposicao.id,
-                                valorAcumuladoPedido: 0,
-                                medida: 'medida',
-                                valorReferencia: 0,
-                                quantidade: produtoComposicao.quantidade,
-                            })
-                    }
-            
-            } else {
-                console.log("produtosComposicao não é um array:", produtosComposicao);
-            }
-        }
-
-        console.log("_______________________________", produtosTransacionados)
-
-
-        
-        // busca produtos comprados diretamente pelos consumidores
-        
-        /*try {
+    /*try {
             pedidosConsumidores = await db.PedidoConsumidores.findAll({
                 raw: true,
                 where: {
                     cicloId: cicloId
-                } 
+                }
             })
         } catch (error) {
             console.log("nenhum pedido encontrado")
@@ -207,16 +201,16 @@ module.exports = {
                     raw: true,
                     where: {
                         pedidoConsumidorId: pedidoConsumidores.id
-                    } 
+                    }
                 })
             } catch (error) {
                 console.log("nenhum produto encontrado")
             }
-            
+
 
             for (let index = 0; index < produtosPedidosConsumidores.length; index++) {
                 const produtoPedidoConsumidor = produtosPedidosConsumidores[index];
-    
+
 
                     ProdutosPedidosConsumidores.push({
                         usuarioId: pedidoConsumidores.usuarioId,
@@ -229,180 +223,166 @@ module.exports = {
 
         }*/
 
-        
+    //return ProdutosPedidosConsumidores
 
-        //return ProdutosPedidosConsumidores
+    //produtosTransacionados = produtosTodasComposicoes
 
+    return produtosTransacionados;
+  },
 
+  async getQuantidadeProdutosComposicaoOld(composicoesProdutoId) {
+    quantidadeProdutosComposicao = await db.ComposicaoOfertaProdutos.findAll({
+      attributes: [
+        [
+          db.sequelize.fn("sum", db.sequelize.col("quantidade")),
+          "SumQuantidade",
+        ],
+      ],
+      where: {
+        composicaoId: composicoesProdutoId.arrayComposicoes,
+        produtoId: composicoesProdutoId.produtoId,
+      },
+      //attributes: [[sequelize.fn('max', sequelize.col('quantidade')), 'sumQuantidade']],
+      raw: true,
+      group: ["produtoId"],
+    });
 
+    return quantidadeProdutosComposicao;
+  },
 
+  async getPedidoPorOfertaComposicao(oferta) {
+    PedidoPorOferta = await db.ComposicaoOfertaProdutos.findAll({
+      where: {
+        ofertaProdutoId: oferta.ofertaProdutoId,
+        composicaoId: oferta.composicaoId,
+      },
+      raw: true,
+    });
 
+    quantidadePedidoPorOferta = 0;
+    if (PedidoPorOferta[0]) {
+      quantidadePedidoPorOferta = PedidoPorOferta[0].quantidade;
+    }
 
+    return quantidadePedidoPorOferta;
+  },
 
+  async getPedidosPorOferta(ofertacicloCestas) {
+    cicloCestaTodas = ofertacicloCestas.cicloCestas;
 
+    arraycicloCestaSoValidas = [];
+    for (let index = 0; index < cicloCestaTodas.length; index++) {
+      const cicloCesta = cicloCestaTodas[index];
 
+      /* desconsiderar cesta auxiliar de oferta de itens adicionais*/
+      if (Number(cicloCesta.cestaId) != 1) {
+        arraycicloCestaSoValidas.push(cicloCesta.id);
+      }
+    }
 
-            
-        //produtosTransacionados = produtosTodasComposicoes
+    pedidosPorOferta = await db.ComposicaoOfertaProdutos.findAll({
+      raw: true,
+      where: {
+        ofertaProdutoId: ofertacicloCestas.ofertaProdutoId,
+      },
+      include: [
+        {
+          model: db.Composicoes,
+          as: "composicao",
+          where: {
+            cicloCestaId: arraycicloCestaSoValidas,
+          },
+        },
+      ],
+    });
 
-        return produtosTransacionados
-
-    },
-
-    async getQuantidadeProdutosComposicaoOld(composicoesProdutoId) {
-                
-        quantidadeProdutosComposicao = await db.ComposicaoOfertaProdutos.findAll({
-            attributes: [
-                [db.sequelize.fn('sum', db.sequelize.col('quantidade')), 'SumQuantidade'],
-              ],
-            where: {
-                composicaoId: composicoesProdutoId.arrayComposicoes,
-                produtoId: composicoesProdutoId.produtoId
-
-            },
-            //attributes: [[sequelize.fn('max', sequelize.col('quantidade')), 'sumQuantidade']],
-            raw: true,
-            group: ['produtoId'],
-        })
-
-        return quantidadeProdutosComposicao
-
-    },
-
-    async getPedidoPorOfertaComposicao(oferta) {
-
-        PedidoPorOferta = await db.ComposicaoOfertaProdutos.findAll({
-            where: {
-                ofertaProdutoId: oferta.ofertaProdutoId,
-                composicaoId:oferta.composicaoId
-            },
-            raw: true,
-        })
-
-        quantidadePedidoPorOferta = 0
-        if (PedidoPorOferta[0]) {
-            quantidadePedidoPorOferta = PedidoPorOferta[0].quantidade
-        }
-        
-        return quantidadePedidoPorOferta
-
-    },
-
-    async getPedidosPorOferta(ofertacicloCestas) {
-
-        cicloCestaTodas = ofertacicloCestas.cicloCestas
-
-        arraycicloCestaSoValidas = []
-        for (let index = 0; index < cicloCestaTodas.length; index++) {
-            const cicloCesta = cicloCestaTodas[index];
-            
-            /* desconsiderar cesta auxiliar de oferta de itens adicionais*/
-            if (Number(cicloCesta.cestaId) != 1) {
-                arraycicloCestaSoValidas.push(cicloCesta.id)
-            }
-        }
-
-        pedidosPorOferta = await db.ComposicaoOfertaProdutos.findAll({
-            raw: true,
-            where: {
-                ofertaProdutoId: ofertacicloCestas.ofertaProdutoId
-            },  
-            include: [{
-                model: db.Composicoes,
-                as: 'composicaoOfertaProdutos',
-                where: {
-                    cicloCestaId: arraycicloCestaSoValidas
-                },
-            }]
-        })
-
-        /*quantidadePedidoPorOferta = 0
+    /*quantidadePedidoPorOferta = 0
         if (pedidoPorOferta[0]) {
             for (let index = 0; index < pedidoPorOferta.length; index++) {
                 const pedido = pedidoPorOferta[index];
                 quantidadePedidoPorOferta = quantidadePedidoPorOferta + pedido.quantidade
             }
         }*/
-        
-        return pedidosPorOferta
 
-    },
+    return pedidosPorOferta;
+  },
 
-    async findOrCreateComposicao (composicaoCicloCestaId) {
+  async findOrCreateComposicao(composicaoCicloCestaId) {
+    let composicaoResult = [];
 
-        let composicaoResult = []
+    try {
+      const results = await db.Composicoes.findOrCreate({
+        raw: true,
+        where: {
+          cicloCestaId: composicaoCicloCestaId.cicloCestaId,
+        },
+      }).then((result) => (composicaoResult = result));
+    } catch (error) {
+      console.log("ERRO_SISTEMA: erro na criacao ou localizacao da composicao");
+      return "error";
+    }
 
+    const composicao = composicaoResult[0];
 
-        try {
-                const results = await db.Composicoes.findOrCreate({
-                                    raw: true,
-                                    where: {
-                                        cicloCestaId: composicaoCicloCestaId.cicloCestaId
-                                    } 
-                                })
-                .then(result => (composicaoResult = result))
-        } catch (error) {
-            console.log("ERRO_SISTEMA: erro na criacao ou localizacao da composicao")
-            return 'error'
-        }
+    return composicao;
+  },
 
-        const composicao = composicaoResult[0]
+  async findOrCreateComposicaoProduto(composicaoProduto) {
+    let pedidoResult = [];
 
-        return composicao
-    },
+    const results = await db.ComposicaoOfertaProdutos.findOrCreate({
+      raw: true,
+      where: {
+        composicaoId: composicaoProduto.composicaoId,
+        ofertaProdutoId: composicaoProduto.ofertaProdutoId,
+      },
+    }).then((result) => (pedidoResult = result));
 
-    async findOrCreateComposicaoProduto (composicaoProduto) {
+    composicaoOfertaProdutoId = pedidoResult[0].id;
 
-        let pedidoResult = []
+    return composicaoOfertaProdutoId;
+  },
 
-        const results = await db.ComposicaoOfertaProdutos.findOrCreate({
-                raw: true,
-                where: {
-                    composicaoId: composicaoProduto.composicaoId,
-                    ofertaProdutoId: composicaoProduto.ofertaProdutoId
-                } 
-            })
-            .then(result => (pedidoResult = result))
+  async updateComposicao(composicao) {
+    await db.Composicoes.update(
+      {
+        cestaId: composicao.cestaId,
+        //nome: composicao.nome,
+        //valormaximo: composicao.valormaximo,
+        //status: composicao.status
+      },
+      {
+        where: {
+          cicloId: composicao.cicloId,
+          cicloCestaId: composicao.cestaId,
+        },
+      },
+    );
+  },
 
-        composicaoOfertaProdutoId = pedidoResult[0].id
-      
-        return composicaoOfertaProdutoId
-    },
+  async updateComposicaoProduto(composicaoProduto) {
+    await db.ComposicaoOfertaProdutos.update(
+      {
+        quantidade: composicaoProduto.quantidade,
+      },
+      {
+        where: {
+          id: composicaoProduto.id,
+        },
+      },
+    );
+  },
 
-    async updateComposicao (composicao) {
-        await db.Composicoes.update({
-            cestaId: composicao.cestaId
-            //nome: composicao.nome,
-            //valormaximo: composicao.valormaximo,
-            //status: composicao.status
-          }, {
-            where: {
-                cicloId: composicao.cicloId,
-                cicloCestaId: composicao.cestaId
-            } 
-          });
-    },
+  async deleteComposicoesZero(composicao) {
+    await db.ComposicaoOfertaProdutos.destroy({
+      where: {
+        composicaoId: composicaoId,
+        quantidade: 0,
+      },
+    });
+  },
 
-    async updateComposicaoProduto (composicaoProduto) {
-        await db.ComposicaoOfertaProdutos.update({
-            quantidade: composicaoProduto.quantidade
-          }, {
-            where: {
-                id: composicaoProduto.id
-            } 
-          });
-    },
-
-    async deleteComposicoesZero (composicao) {
-        await db.ComposicaoOfertaProdutos.destroy({
-            where: {
-                composicaoId: composicaoId,
-                quantidade: 0
-            }
-          });
-    },
-
-    /*async deleteComposicao (composicaoId) {
+  /*async deleteComposicao (composicaoId) {
         await db.Composicoes.destroy({
             where: {
                 id: composicaoId
@@ -410,283 +390,284 @@ module.exports = {
           });
     }*/
 
-    async getQuantidadeComposicaoOfertaProdutoPorFornecedor(ofertaProdutoId) {
-                
-        quantidadeComposicaoOfertaProdutoPorFornecedor = await db.ComposicaoOfertaProdutos.findAll({
-            attributes: [
-                [db.sequelize.fn('sum', db.sequelize.col('quantidade')), 'SumQuantidade'],
-              ],
-              where: {
-                ofertaProdutoId: ofertaProdutoId.arrayProdutosOfertas
+  async getQuantidadeComposicaoOfertaProdutoPorFornecedor(ofertaProdutoId) {
+    quantidadeComposicaoOfertaProdutoPorFornecedor =
+      await db.ComposicaoOfertaProdutos.findAll({
+        attributes: [
+          [
+            db.sequelize.fn("sum", db.sequelize.col("quantidade")),
+            "SumQuantidade",
+          ],
+        ],
+        where: {
+          ofertaProdutoId: ofertaProdutoId.arrayProdutosOfertas,
+        },
+        //attributes: [[sequelize.fn('max', sequelize.col('quantidade')), 'sumQuantidade']],
+        raw: true,
+      });
 
-            },
-            //attributes: [[sequelize.fn('max', sequelize.col('quantidade')), 'sumQuantidade']],
-            raw: true,
-        })
+    quantidadeComposicaoOfertaProdutoPorFornecedor =
+      quantidadeComposicaoOfertaProdutoPorFornecedor[0].SumQuantidade;
 
-        quantidadeComposicaoOfertaProdutoPorFornecedor = quantidadeComposicaoOfertaProdutoPorFornecedor[0].SumQuantidade
-    
-        return quantidadeComposicaoOfertaProdutoPorFornecedor
+    return quantidadeComposicaoOfertaProdutoPorFornecedor;
+  },
 
-    },
+  async getValorTotalPedidoAcumulado(usuarioIdCicloIdcicloCestas) {
+    oferta = await db.Oferta.findAll({
+      raw: true,
+      where: {
+        cicloId: usuarioIdCicloIdcicloCestas.cicloId,
+        usuarioId: usuarioIdCicloIdcicloCestas.usuarioId,
+      },
+    });
 
-    async getValorTotalPedidoAcumulado(usuarioIdCicloIdcicloCestas) {
-        
-        oferta = await db.Oferta.findAll ({
-            raw: true,
-            where: {
-                cicloId: usuarioIdCicloIdcicloCestas.cicloId,
-                usuarioId: usuarioIdCicloIdcicloCestas.usuarioId
-            },
-        })
+    ofertas = await db.OfertaProdutos.findAll({
+      //attributes: ['id'],
+      raw: true,
+      where: {
+        ofertaId: oferta[0].id,
+      },
+    });
 
-        ofertas = await db.OfertaProdutos.findAll ({
-            //attributes: ['id'],
-            raw: true,
-            where: {
-                ofertaId: oferta[0].id
-            },
-        })
+    arrayOfertasProdutos = [];
+    for (let index = 0; index < ofertas.length; index++) {
+      const oferta = ofertas[index];
+      arrayOfertasProdutos.push(oferta.id);
+    }
 
-        arrayOfertasProdutos = []
-        for (let index = 0; index < ofertas.length; index++) {
-            const oferta = ofertas[index];
-            arrayOfertasProdutos.push(oferta.id)
-        }
+    cicloCestaTodas = usuarioIdCicloIdcicloCestas.cicloCestas;
 
-        cicloCestaTodas = usuarioIdCicloIdcicloCestas.cicloCestas
+    arraycicloCestaSoValidas = [];
+    for (let index = 0; index < cicloCestaTodas.length; index++) {
+      const cicloCesta = cicloCestaTodas[index];
 
-        arraycicloCestaSoValidas = []
-        for (let index = 0; index < cicloCestaTodas.length; index++) {
-            const cicloCesta = cicloCestaTodas[index];
-            
-            /* desconsiderar cesta auxiliar de oferta de itens adicionais*/
-            if (Number(cicloCesta.cestaId) != 1) {
-                arraycicloCestaSoValidas.push(cicloCesta.id)
-            }
-        }
-        
-        
-        pedidos = await db.ComposicaoOfertaProdutos.findAll({
-            raw: true,
-            where: {
-                ofertaProdutoId: arrayOfertasProdutos
-            },  
-            include: [{
-                model: db.Composicoes,
-                as: 'composicaoOfertaProdutos',
-                where: {
-                    cicloCestaId: arraycicloCestaSoValidas
-                },
-            }]
-        })
+      /* desconsiderar cesta auxiliar de oferta de itens adicionais*/
+      if (Number(cicloCesta.cestaId) != 1) {
+        arraycicloCestaSoValidas.push(cicloCesta.id);
+      }
+    }
 
+    pedidos = await db.ComposicaoOfertaProdutos.findAll({
+      raw: true,
+      where: {
+        ofertaProdutoId: arrayOfertasProdutos,
+      },
+      include: [
+        {
+          model: db.Composicoes,
+          as: "composicao",
+          where: {
+            cicloCestaId: arraycicloCestaSoValidas,
+          },
+        },
+      ],
+    });
 
-        produtos = await db.Produto.findAll({
-            raw: true,
-        })
+    produtos = await db.Produto.findAll({
+      raw: true,
+    });
 
-        let valorTotal = 0
-        for (let index = 0; index < pedidos.length; index++) {
-            const pedido = pedidos[index];
+    let valorTotal = 0;
+    for (let index = 0; index < pedidos.length; index++) {
+      const pedido = pedidos[index];
 
-            ofertaProduto = ofertas.find(oferta => Number(oferta.id) === Number(pedido.ofertaProdutoId))
+      ofertaProduto = ofertas.find(
+        (oferta) => Number(oferta.id) === Number(pedido.ofertaProdutoId),
+      );
 
-            produtoDados = produtos.find(produto => Number(produto.id) === Number(ofertaProduto.produtoId))
+      produtoDados = produtos.find(
+        (produto) => Number(produto.id) === Number(ofertaProduto.produtoId),
+      );
 
-            valorTotal = valorTotal + Number(pedido.quantidade) * Number(produtoDados.valorReferencia)
-            
-        }
+      valorTotal =
+        valorTotal +
+        Number(pedido.quantidade) * Number(produtoDados.valorReferencia);
+    }
 
-        
-        return valorTotal
+    return valorTotal;
+  },
 
-    },
+  async getTotalProdutosPedidoAcumulado(usuarioIdCicloIdProdutoIdcicloCestas) {
+    oferta = await db.Oferta.findAll({
+      raw: true,
+      where: {
+        cicloId: usuarioIdCicloIdProdutoIdcicloCestas.cicloId,
+        usuarioId: usuarioIdCicloIdProdutoIdcicloCestas.usuarioId,
+      },
+    });
 
-    async getTotalProdutosPedidoAcumulado(usuarioIdCicloIdProdutoIdcicloCestas) {
-        
-        oferta = await db.Oferta.findAll ({
-            raw: true,
-            where: {
-                cicloId: usuarioIdCicloIdProdutoIdcicloCestas.cicloId,
-                usuarioId: usuarioIdCicloIdProdutoIdcicloCestas.usuarioId
-            },
-        })
+    ofertas = await db.OfertaProdutos.findAll({
+      //attributes: ['id'],
+      raw: true,
+      where: {
+        ofertaId: oferta[0].id,
+        produtoId: usuarioIdCicloIdProdutoIdcicloCestas.produtoId,
+      },
+    });
 
-        ofertas = await db.OfertaProdutos.findAll ({
-            //attributes: ['id'],
-            raw: true,
-            where: {
-                ofertaId: oferta[0].id,
-                produtoId: usuarioIdCicloIdProdutoIdcicloCestas.produtoId
-            },
-        })
+    arrayOfertasProdutos = [];
+    for (let index = 0; index < ofertas.length; index++) {
+      const oferta = ofertas[index];
+      arrayOfertasProdutos.push(oferta.id);
+    }
 
-        arrayOfertasProdutos = []
-        for (let index = 0; index < ofertas.length; index++) {
-            const oferta = ofertas[index];
-            arrayOfertasProdutos.push(oferta.id)
-        }
+    cicloCestaTodas = usuarioIdCicloIdProdutoIdcicloCestas.cicloCestas;
 
-        cicloCestaTodas = usuarioIdCicloIdProdutoIdcicloCestas.cicloCestas
+    arraycicloCestaSoValidas = [];
+    for (let index = 0; index < cicloCestaTodas.length; index++) {
+      const cicloCesta = cicloCestaTodas[index];
 
-        arraycicloCestaSoValidas = []
-        for (let index = 0; index < cicloCestaTodas.length; index++) {
-            const cicloCesta = cicloCestaTodas[index];
-            
-            /* desconsiderar cesta auxiliar de oferta de itens adicionais*/
-            if (Number(cicloCesta.cestaId) != 1) {
-                arraycicloCestaSoValidas.push(cicloCesta.id)
-            }
-        }
+      /* desconsiderar cesta auxiliar de oferta de itens adicionais*/
+      if (Number(cicloCesta.cestaId) != 1) {
+        arraycicloCestaSoValidas.push(cicloCesta.id);
+      }
+    }
 
+    pedidos = await db.ComposicaoOfertaProdutos.findAll({
+      raw: true,
+      where: {
+        ofertaProdutoId: arrayOfertasProdutos,
+      },
+      include: [
+        {
+          model: db.Composicoes,
+          as: "composicao",
+          where: {
+            cicloCestaId: arraycicloCestaSoValidas,
+          },
+        },
+      ],
+    });
 
-        pedidos = await db.ComposicaoOfertaProdutos.findAll({
-            raw: true,
-            where: {
-                ofertaProdutoId: arrayOfertasProdutos
-            },  
-            include: [{
-                model: db.Composicoes,
-                as: 'composicaoOfertaProdutos',
-                where: {
-                    cicloCestaId: arraycicloCestaSoValidas
-                },
-            }]
-        })
-
-        /*produtos = await db.Produto.findAll({
+    /*produtos = await db.Produto.findAll({
             raw: true,
         })*/
 
-        let Total = 0
-        for (let index = 0; index < pedidos.length; index++) {
-            const pedido = pedidos[index];
+    let Total = 0;
+    for (let index = 0; index < pedidos.length; index++) {
+      const pedido = pedidos[index];
 
-            Total = Total + Number(pedido.quantidade)
-            
-        }
+      Total = Total + Number(pedido.quantidade);
+    }
 
-        
-        return Total
+    return Total;
+  },
 
-    },
+  async getTotalProdutosPedidosComposicaoItensAdicionais(
+    usuarioIdCicloIdProdutoId,
+  ) {
+    composicao = await db.CicloCestas.findAll({
+      raw: true,
+      where: {
+        cicloId: usuarioIdCicloIdProdutoId.cicloId,
+        cestaId: 1,
+      },
+      include: [
+        {
+          model: db.Composicoes,
+          as: "composicoes",
+        },
+      ],
+    });
 
-  
-    async getTotalProdutosPedidosComposicaoItensAdicionais(usuarioIdCicloIdProdutoId) {
-        
-        composicao = await db.CicloCestas.findAll ({
-            raw: true,
-            where: {
-                cicloId: usuarioIdCicloIdProdutoId.cicloId,
-                cestaId: 1
-            },  
-            include: [{
-                model: db.Composicoes,
-                as: 'cicloCesta',
-            }]
-        })
+    const composicaoItensAdicionais = composicao[0];
+    const composicaoId = composicaoItensAdicionais["composicoes.id"];
 
-        const composicaoItensAdicionais = composicao[0]
-        const composicaoId = composicaoItensAdicionais['cicloCesta.id']
+    pedidos = await db.ComposicaoOfertaProdutos.findAll({
+      raw: true,
+      where: {
+        composicaoId: composicaoId,
+      },
+      include: [
+        {
+          model: db.OfertaProdutos,
+          as: "ofertaProduto",
+          where: {
+            produtoId: usuarioIdCicloIdProdutoId.produtoId,
+          },
+        },
+      ],
+    });
 
-        pedidos = await db.ComposicaoOfertaProdutos.findAll({
-            raw: true,
-            where: {
-                composicaoId: composicaoId
-            },  
-            include: [{
-                model: db.OfertaProdutos,
-                as: 'ofertaProduto',
-                where: {
-                    produtoId: usuarioIdCicloIdProdutoId.produtoId
-                },
-            }]
-        })
+    let totalPorProduto = 0;
+    for (let index = 0; index < pedidos.length; index++) {
+      const pedido = pedidos[index];
 
-        let totalPorProduto = 0
-        for (let index = 0; index < pedidos.length; index++) {
-            const pedido = pedidos[index];
+      totalPorProduto = totalPorProduto + Number(pedido.quantidade);
+    }
 
-            totalPorProduto = totalPorProduto + Number(pedido.quantidade)
-            
-        }
-        
-        return totalPorProduto
+    return totalPorProduto;
+  },
 
-    },
+  async getQuantidadeProdutoPedidoFornecedores(ofertaProdutoId) {
+    quantidadeProdutosPedidosFornecedores =
+      await db.PedidosFornecedores.findAll({
+        attributes: [
+          [
+            db.sequelize.fn("sum", db.sequelize.col("quantidade")),
+            "SumQuantidade",
+          ],
+        ],
+        where: {
+          ofertaProdutoId: ofertaProdutoId.arrayProdutosOfertas,
+        },
+        //attributes: [[sequelize.fn('max', sequelize.col('quantidade')), 'sumQuantidade']],
+        raw: true,
+      });
 
+    quantidadeProdutosPedidosFornecedores =
+      quantidadeProdutosPedidosFornecedores[0].SumQuantidade;
 
+    return quantidadeProdutosPedidosFornecedores;
+  },
 
-    async getQuantidadeProdutoPedidoFornecedores(ofertaProdutoId) {
-                
-        quantidadeProdutosPedidosFornecedores = await db.PedidosFornecedores.findAll({
-            attributes: [
-                [db.sequelize.fn('sum', db.sequelize.col('quantidade')), 'SumQuantidade'],
-              ],
-              where: {
-                ofertaProdutoId: ofertaProdutoId.arrayProdutosOfertas
+  async getPedidoFornecedores(ofertaProdutoId) {
+    pedidosFornecedores = await db.PedidosFornecedores.findAll({
+      raw: true,
+      where: {
+        ofertaProdutoId: ofertaProdutoId.id,
+      },
+    });
 
-            },
-            //attributes: [[sequelize.fn('max', sequelize.col('quantidade')), 'sumQuantidade']],
-            raw: true,
-        })
+    let quantPedido = 0;
+    pedidosFornecedores.forEach((pedidoFornecedores) => {
+      quantPedido = pedidoFornecedores.quantidade;
+    });
 
-        quantidadeProdutosPedidosFornecedores = quantidadeProdutosPedidosFornecedores[0].SumQuantidade
-    
-        return quantidadeProdutosPedidosFornecedores
+    console.log("quantPedido:", quantPedido);
 
-    },
+    return quantPedido;
+  },
 
-    async getPedidoFornecedores(ofertaProdutoId) {
+  async findOrCreatePedidosFornecedores(pedidoFornecedores) {
+    let pedidoResult = [];
 
+    const results = await db.PedidosFornecedores.findOrCreate({
+      raw: true,
+      where: {
+        ofertaProdutoId: pedidoFornecedores.ofertaProdutoId,
+      },
+    }).then((result) => (pedidoResult = result));
 
-        pedidosFornecedores = await db.PedidosFornecedores.findAll({
-                raw: true,
-                where: {
-                    ofertaProdutoId: ofertaProdutoId.id
-                } 
-            })
-        
-        let quantPedido = 0
-        pedidosFornecedores.forEach(pedidoFornecedores => {
-            quantPedido = pedidoFornecedores.quantidade 
-        });
+    pedidoFornecedores = pedidoResult[0].id;
 
-        console.log("quantPedido:",quantPedido)
-        
-  
-        return quantPedido
-    },
+    return pedidoFornecedores;
+  },
 
-    async findOrCreatePedidosFornecedores(pedidoFornecedores) {
+  async updatePedidosFornecedores(pedidoFornecedores) {
+    await db.PedidosFornecedores.update(
+      {
+        quantidade: pedidoFornecedores.quantidade,
+      },
+      {
+        where: {
+          id: pedidoFornecedores.id,
+        },
+      },
+    );
+  },
 
-        let pedidoResult = []
-
-        const results = await db.PedidosFornecedores.findOrCreate({
-                raw: true,
-                where: {
-                    ofertaProdutoId: pedidoFornecedores.ofertaProdutoId
-                } 
-            })
-            .then(result => (pedidoResult = result))
-    
-            pedidoFornecedores = pedidoResult[0].id
-  
-            return pedidoFornecedores
-    },
-
-    async updatePedidosFornecedores(pedidoFornecedores) {
-        await db.PedidosFornecedores.update({
-            quantidade: pedidoFornecedores.quantidade
-          }, {
-            where: {
-                id: pedidoFornecedores.id
-            } 
-          });
-    },
-
-    /*async deleteComposicoesZero (composicao) {
+  /*async deleteComposicoesZero (composicao) {
         await db.ComposicaoOfertaProdutos.destroy({
             where: {
                 composicaoId: composicaoId,
@@ -695,15 +676,11 @@ module.exports = {
           });
     }*/
 
-    /*async deleteComposicao (composicaoId) {
+  /*async deleteComposicao (composicaoId) {
         await db.Composicoes.destroy({
             where: {
                 id: composicaoId
             }
           });
     }*/
-    
-
-}
-
-
+};
