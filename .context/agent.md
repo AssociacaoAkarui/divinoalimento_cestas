@@ -656,6 +656,81 @@ npm run test:all
 
 ---
 
+### 2025-11-12 | Implementação da Camada de Serviços - PedidoConsumidores
+
+**Objetivo:** Extrair a lógica de negócio do `PedidoConsumidoresController` para a camada de serviços, seguindo os padrões já estabelecidos no projeto (Clean Architecture, uso de `ServiceError`, `filterPayload`, `normalizePayload`).
+
+#### 🏗️ Trabalho Realizado
+
+**1. Criação da Classe `PedidoConsumidoresService`**
+
+Arquivo: `app/src/services/services.js`
+
+**Métodos implementados:**
+- `criarPedidoConsumidor(dados)`
+  - Validações: campos permitidos (`cicloId`, `usuarioId`, `status`, `observacao`)
+  - Verifica existência do Ciclo e Usuário
+  - Usa `filterPayload` e `normalizePayload`
+  - Lança `ServiceError` com contexto
+
+- `buscarOuCriarPedidoConsumidor(cicloId, usuarioId)`
+  - Buscar pedido existente ou criar novo (evita duplicação)
+  - Usa `findOrCreate` do Sequelize
+  - Status padrão: "ativo"
+  - Validação: requer `cicloId` e `usuarioId`
+
+**2. Atualização do Controller**
+
+Arquivo: `app/src/controllers/PedidoConsumidoresController.js`
+- Import de `PedidoConsumidoresService` e `ServiceError`
+- Instância do service dentro dos métodos (não global)
+- Método `showCreateEdit` refatorado para usar service
+- Tratamento de erro adequado
+
+**3. Testes BDD**
+
+Arquivo: `app/features/pedidoconsumidores.feature`
+
+**Cenários implementados:**
+- PDC-01: Criar um novo pedido de consumidor ✅
+- PDC-09: Buscar ou criar pedido de consumidor (sem duplicação) ✅
+
+**Steps:** `app/features/step_definitions/pedidoconsumidores_steps.js`
+- Factory criada: `PedidoConsumidoresFactory`
+- Compartilhamento de `cicloAtivo` via `this.cicloAtivo`
+
+#### 📊 Métricas
+
+| Item | Valor |
+|------|-------|
+| Linhas de código | ~150 |
+| Métodos criados | 2 |
+| Testes BDD | 2 cenários (10 steps) |
+| Arquivos modificados | 6 |
+| Cobertura | 2/8 cenários |
+
+#### ✅ Padrões Seguidos
+
+1. Arquitetura em Camadas: Controller → Service → Model
+2. Validação de Payload: `filterPayload` e `normalizePayload`
+3. Tratamento de Erros: `ServiceError` consistente
+4. Instanciação de Services: Dentro dos métodos
+5. TDD/BDD: Testes escritos antes da implementação
+6. Nomenclatura: Convenções do projeto
+7. DRY: Reuso de steps compartilhados
+
+#### 🎯 Cenários Restantes (Sugeridos)
+
+1. PDC-02: Ver detalhes de um pedido existente
+2. PDC-03: Adicionar produto a um pedido
+3. PDC-04: Atualizar quantidade de produto
+4. PDC-05: Calcular valor total do pedido
+5. PDC-06: Atualizar status do pedido
+6. PDC-07: Listar pedido de um consumidor
+7. PDC-08: Listar todos os pedidos de um ciclo
+
+---
+
 ### 2025-11-21 | Tentativa de Execução dos Testes E2E - NÃO FUNCIONOU
 
 **Objetivo:** Executar os testes E2E de interface (Puppeteer + Cucumber) que foram criados em 2025-11-13.
