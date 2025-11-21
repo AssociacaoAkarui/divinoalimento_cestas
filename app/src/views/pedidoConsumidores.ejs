@@ -4,448 +4,457 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#41414C" />
+    <meta name="theme-color" content="#43A047" />
     <link rel="shortcut icon" href="images/favicon.png" type="image/png" />
-    <title>Divino Alimento - Akarui</title>
-
-    <link rel="stylesheet" href="/styles/main.css" />
-    <link rel="stylesheet" href="/styles/partials/header.css" />
-    <link rel="stylesheet" href="/styles/partials/index-header.css" />
-    <link rel="stylesheet" href="/styles/partials/cards.css" />
-    <link rel="stylesheet" href="/styles/partials/buttons.css" />
-    <link rel="stylesheet" href="/styles/partials/modal.css" />
-    <link rel="stylesheet" href="/styles/partials/forms.css" />
-    <link rel="stylesheet" href="/styles/partials/animations.css" />
-
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@700&display=swap" rel="stylesheet">
+    <title>Divino Alimento - Pedidos Extras</title>
 
     <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- links bootstrap -->
-    <!--<link rel="stylesheet" href="/css/bootstrap.min.css"/>
-    <script src="/js/jquery.min.js"></script>
-    <script src="/js/bootstrap.bundle.min.js"></script>-->
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/pages/pedidoConsumidores.css">
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"/>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-
-
-    <link rel="stylesheet" href="/styles/pages/pedidoConsumidores.css" />
-
-    <script>
-      $(document).ready(function(){
-        $("#searchUsuario").on("keyup", function() {
-          var value = $(this).val().toLowerCase();
-          value = replaceSpecialChars(value)
-          $(".dropdown-menu li").filter(function() {
-            var value2 = replaceSpecialChars($(this).text().toLowerCase())
-            $(this).toggle(value2.indexOf(value) > -1)
-          });
-        });
-      });
-    </script>
-
-  <script>
-    $(document).ready(function(){
-      $("#searchProduto").on("keyup", function() {
-        var value = $(this).val().toLowerCase();
-        value = replaceSpecialChars(value)
-        $("#principal section.product").filter(function() {
-          //$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-          //var value2 = $(this).text().toLowerCase()
-          //value2 = replaceSpecialChars(value2)
-          var value2 = replaceSpecialChars($(this).text().toLowerCase())
-          $(this).toggle(value2.indexOf(value) > -1)
-        });
-      });
-    });
-
-    function replaceSpecialChars(str)	{
-      if (!str) return ''
-      str = str.toString()
-      str = str.replace(/[aáàãäâ]/,'a')
-      str = str.replace(/[eéèëê]/,'e')
-      str = str.replace(/[iíìïî]/,'i')
-      str = str.replace(/[oóòõöô]/,'o')
-      str = str.replace(/[uúùüû]/,'u')
-      str = str.replace(/[ç]/,"c")
-      return str 
-    }
-  </script>
-
-
+    <script src="/js/services/api.service.js"></script>
+    <script src="/js/services/pedidoConsumidores.service.js"></script>
+    <script src="/js/utils/feedback.js"></script>
   </head>
-  <body id="page-pedidosFornecedores">
 
-   
-    <%- include('parts/header', {
-      button_text:'vazio',
-      button_link:''
-      }) %>
+  <body>
+    <header class="header">
+      <div class="header-content">
+        <h1 class="header-title">🛒 Divino Alimento - Pedidos Extras</h1>
 
-
-  <!--<div class="container flex animate-up delay-2">-->
-  <div class="container">
-      <main>
-
-        <div class="info_ciclo">
-          <h3>CICLO&nbsp<%= ciclo.nome %></h3>
-          <p>Finalize seu pedido extra até&nbsp<%
-                if (ciclo.retiradaConsumidorFim) { %>
-                <%=
-                  ciclo.itensAdicionaisFim.toISOString().substr(8,2)%>/<%=
-                  ciclo.itensAdicionaisFim.toISOString().substr(5,2)%>/<%=
-                  ciclo.itensAdicionaisFim.toISOString().substr(0,4)%>&nbsp às &nbsp<%=
-                  ciclo.itensAdicionaisFim.toISOString().substr(11,5)%>
-                <% } %> 
-          </p>
-          <br>
-        </div>
-
-        <form id="form-pedidoConsumidores"
-          method="POST"
-          action="/pedidoconsumidores" >
-
-          <div class="secao_selecao">
-            <legend>Pedidos Extras</legend>
-
-            <div class="selecao">
-              <h4>
-                Consumidor: 
-                <% if (usuarioConsumidor) { %>
-                  <%= usuarioConsumidor.nome %>
-                <% } %>
-              </h4>
-            </div>
-            <input 
-                  type="hidden"
-                  id= "pedidoConsumidorId"
-                  name= "pedidoConsumidorId"
-                  value="<%= pedidoConsumidorId %>"
-              />
-              <input 
-                  type="hidden"
-                  id= "cicloId"
-                  name= "cicloId"
-                  value="<%= ciclo.id %>"
-              />
-              <input 
-                  type="hidden"
-                  id= "usuarioConsumidorId"
-                  name= "usuarioConsumidorId"
-                  value="<%= usuarioConsumidor.id %>"
-              />
-            
-              <%  console.log('PERFIL_UsuarioAtivo',usuarioAtivo.perfil.indexOf('admin'))
-                  if ( usuarioAtivo.perfil) {
-                    if ( usuarioAtivo.perfil.indexOf('admin') >= 0 ) { %>
-                      <div id="selecaoUsuario" class="input-wrapper">
-                        <div class="dropdown">
-                          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Selecione seu nome&nbsp;&nbsp;&nbsp;   
-                          <span class="caret"></span></button>
-                          <ul class="dropdown-menu">
-                            <input class="form-control" id="searchUsuario" type="text" placeholder="Busque o consumidor..">
-                              <% usuarios.forEach(usuario => { %>
-                                <li><a href="?usr=<%= usuario.id %>"><%= usuario.nome %></a></li>
-                              <% }) %>
-                          </ul>
-                        </div>
-                    </div>
-              <% }} %>
-            </div>
-            
-        <div class="itens_pedidos">
-
-          <div class="pedidoFornecedor">
-            <div style= "font-size: 18px;margin-top: 20px;">
-              CESTA DA SEMANA:
-            </div>
-            <!--<e% produtosComposicaoDados.forEach(produtoComposicao => { %e>
-              <div style= "margin-left: 20px;">
-                <e%= produtoComposicao.quantidade %> <e%= produtoComposicao.nome %e>
-              </div>
-            <e% }) %e>-->
-            <div style= "margin-left: 20px;">
-              <% if (ciclo.observacao) { %>
-                  <span><%= ciclo.observacao %></span>
-              <% } else { %>
-                <span></span>
-              <% } %>
+        <% if (usuarioAtivo && usuarioAtivo.perfil && usuarioAtivo.perfil.indexOf('admin') >= 0) { %>
+          <div class="dropdown" id="userDropdown">
+            <button class="dropdown-toggle" onclick="toggleDropdown()" aria-haspopup="true" aria-expanded="false">
+              👤 <%= usuarioConsumidor ? usuarioConsumidor.nome : 'Selecionar' %>
+            </button>
+            <div class="dropdown-menu" role="menu">
+              <input class="search-input" type="text" id="searchUsuario" placeholder="Buscar consumidor..." style="margin: 0.5rem; width: calc(100% - 1rem);">
+              <% usuarios.forEach(usuario => { %>
+                <a href="?usr=<%= usuario.id %>" class="dropdown-item" role="menuitem"><%= usuario.nome %></a>
+              <% }) %>
             </div>
           </div>
-            
+        <% } %>
+      </div>
+    </header>
 
-          <% if (produtosPedidos.length > 0) {%>
-              <%  let consumidorCorrente = 0
-                  let consumidorAnterior = 0
-                  let totalPedido = 0
-                  let valorPedidoPorItem = 0
-                  let taxaAdministracao = 0
-                  let taxaPorProduto = 0.5
-                  produtosPedidos.forEach(produtoPedido => {
-                      consumidorCorrente = produtosPedidos.consumidorId
-                      if (consumidorCorrente != consumidorAnterior) {
-              %>
-           
-                          <% if (consumidorAnterior != 0) {%>
-                              </div>
-                          <% } 
-                             consumidorAnterior = consumidorCorrente
-                          %>
-                          <div class="pedidoFornecedor">
-                          <div style= "font-size: 18px;margin-top: 20px;">
-                            PEDIDO:
-                          </div>
-                          <div style= "margin-left: 20px;">
-                            <%= produtoPedido.quantidade %> <%= produtoPedido.nome %>
-                            <% valorPedidoPorItem = (produtoPedido.quantidade * produtoPedido.valorReferencia)
-                                 totalPedido = (totalPedido + valorPedidoPorItem)
-                                 taxaAdministracao = taxaAdministracao + (produtoPedido.quantidade * taxaPorProduto) %>
-                                (R$ <%= valorPedidoPorItem.toFixed(2).replace('.',',' ) %>)
-                          </div>
-                    <% } else { %>
-                        <div style= "margin-left: 20px;">
-                          <%= produtoPedido.quantidade %> <%= produtoPedido.nome %>
-                          <% valorPedidoPorItem = (produtoPedido.quantidade * produtoPedido.valorReferencia)
-                                 totalPedido = (totalPedido + valorPedidoPorItem)
-                                 taxaAdministracao = taxaAdministracao + (produtoPedido.quantidade * taxaPorProduto) %>
-                                (R$ <%= valorPedidoPorItem.toFixed(2).replace('.',',' ) %>)
-                        </div>
-         <% } %>
-         
-         <% }) %>
+    <div class="container">
+      <%
+        const itensAdicionaisFim = ciclo.itensAdicionaisFim ? new Date(ciclo.itensAdicionaisFim) : null
+        const dataAtual = new Date()
+        const periodoAberto = itensAdicionaisFim ? dataAtual < itensAdicionaisFim : false
+        const pedidoFinalizado = statusPedido === 'finalizado'
 
-        <div style= "font-size: 18px;margin-top: 20px;">
-                 <br> Total pedido R$ <span><%= totalPedido.toFixed(2).replace('.',',' ) %></span>
-        </div>
-         <div style= "font-size: 18px;margin-top: 20px;">
-                 <br> Taxa administrativa R$ <span><%= taxaAdministracao.toFixed(2).replace('.',',' ) %></span>
-        </div>
-        <div style= "margin-top:4px;">
-                <i>( R$ 0,50 por item )</i>
-        </div>
-        <div class="price">
-                 <br> TOTAL R$ <span><%= (totalPedido + taxaAdministracao).toFixed(2).replace('.',',' ) %></span>
+        // Calcular posição do indicador
+        let posIndicador = 0
+        if (pedidoFinalizado) posIndicador = 3
+        else if (produtosPedidos && produtosPedidos.length > 0) posIndicador = 2
+        else if (periodoAberto) posIndicador = 1
+
+        // Calcular totais do pedido
+        let totalPedido = 0
+        let taxaAdministracao = 0
+        const taxaPorProduto = 0.5
+
+        if (produtosPedidos && produtosPedidos.length > 0) {
+          produtosPedidos.forEach(p => {
+            totalPedido += p.quantidade * p.valorReferencia
+            taxaAdministracao += p.quantidade * taxaPorProduto
+          })
+        }
+      %>
+
+      <div class="card">
+        <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">
+          Olá, <%= usuarioConsumidor ? usuarioConsumidor.nome : 'Consumidor' %>! 👋
+        </h2>
+        <p style="color: var(--gray-600); font-size: 1.125rem; margin-bottom: 1.5rem;">
+          Ciclo <strong><%= ciclo.nome %></strong>
+        </p>
+
+        <div class="progress-steps" role="progressbar" aria-valuenow="<%= posIndicador %>" aria-valuemin="0" aria-valuemax="3">
+          <div class="progress-line">
+            <div class="progress-line-fill" style="width: <%= (posIndicador / 3) * 100 %>%"></div>
+          </div>
+
+          <div class="step <%= posIndicador >= 0 ? 'active' : '' %>">
+            <div class="step-circle <%= posIndicador > 0 ? 'completed' : posIndicador === 0 ? 'active' : '' %>">
+              <%= posIndicador > 0 ? '✓' : '1' %>
+            </div>
+            <span class="step-label">Ciclo Ativo</span>
+          </div>
+
+          <div class="step <%= posIndicador >= 1 ? 'active' : '' %>">
+            <div class="step-circle <%= posIndicador > 1 ? 'completed' : posIndicador === 1 ? 'active' : '' %>">
+              <%= posIndicador > 1 ? '✓' : '2' %>
+            </div>
+            <span class="step-label">Seleção Produtos</span>
+          </div>
+
+          <div class="step <%= posIndicador >= 2 ? 'active' : '' %>">
+            <div class="step-circle <%= posIndicador > 2 ? 'completed' : posIndicador === 2 ? 'active' : '' %>">
+              <%= posIndicador > 2 ? '✓' : '3' %>
+            </div>
+            <span class="step-label">Pedido Enviado</span>
+          </div>
+
+          <div class="step <%= posIndicador >= 3 ? 'active' : '' %>">
+            <div class="step-circle <%= posIndicador === 3 ? 'active' : '' %>">
+              4
+            </div>
+            <span class="step-label">Finalizado</span>
+          </div>
         </div>
 
-        <div class="mensagem_pedido" >
-            <span> Pedido não finalizado. Escolha os produtos e confirme seu pedido!</span>
+        <% if (!periodoAberto && !pedidoFinalizado) { %>
+          <div class="alert alert-warning" role="status">
+            <span>⏰</span>
+            <span>Período para pedidos extras encerrado</span>
+          </div>
+        <% } else if (pedidoFinalizado) { %>
+          <div class="alert alert-info" role="status">
+            <span>✅</span>
+            <span>Seu pedido foi finalizado com sucesso!</span>
+          </div>
+        <% } else if (itensAdicionaisFim) { %>
+          <div class="alert alert-success" role="status">
+            <span>🛒</span>
+            <span>Finalize seu pedido até <strong><%= itensAdicionaisFim.toISOString().substr(8,2) %>/<%= itensAdicionaisFim.toISOString().substr(5,2) %>/<%= itensAdicionaisFim.toISOString().substr(0,4) %> às <%= itensAdicionaisFim.toISOString().substr(11,5) %>h</strong></span>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Cesta da Semana -->
+      <% if (ciclo.observacao) { %>
+        <div class="cesta-card">
+          <h3>🧺 Cesta da Semana</h3>
+          <p><%= ciclo.observacao %></p>
         </div>
-
-       </div>
-       <br><br>
-
       <% } %>
 
+      <!-- Resumo do Pedido -->
+      <% if (produtosPedidos && produtosPedidos.length > 0) { %>
+        <div class="summary-card <%= pedidoFinalizado ? 'status-finalizado' : '' %>">
+          <div class="summary-header">
+            <div class="summary-stat">
+              <div>
+                <div class="summary-number" id="totalItems"><%= produtosPedidos.length %></div>
+                <div class="summary-label">Itens no Pedido</div>
+              </div>
+            </div>
+            <div class="summary-totals">
+              <div class="summary-total-label">Total do Pedido</div>
+              <div class="summary-total-value" id="totalValue">R$ <%= (totalPedido + taxaAdministracao).toFixed(2).replace('.', ',') %></div>
+              <div class="summary-fee">Produtos: R$ <%= totalPedido.toFixed(2).replace('.', ',') %> + Taxa: R$ <%= taxaAdministracao.toFixed(2).replace('.', ',') %></div>
+            </div>
+          </div>
+
+          <div class="ordered-list" id="orderedList">
+            <% produtosPedidos.forEach(produto => { %>
+              <div class="ordered-item" data-produto-id="<%= produto.produtoId %>">
+                <span class="ordered-item-name"><%= produto.nome %></span>
+                <span class="ordered-item-qty"><%= produto.quantidade %>x</span>
+                <span class="ordered-item-price">R$ <%= (produto.quantidade * produto.valorReferencia).toFixed(2).replace('.', ',') %></span>
+              </div>
+            <% }) %>
+          </div>
+
+          <% if (!pedidoFinalizado) { %>
+            <div class="status-message" style="margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.15); border-radius: var(--radius); text-align: center;">
+              ⚠️ Pedido não finalizado. Confirme abaixo para garantir seus produtos!
+            </div>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="alert alert-info">
+          <span>📦</span>
+          <span>Você ainda não possui produtos no pedido. Selecione abaixo!</span>
+        </div>
+      <% } %>
+
+      <!-- Formulário de Seleção de Produtos -->
+      <% if (periodoAberto || (usuarioAtivo && usuarioAtivo.perfil && usuarioAtivo.perfil.indexOf('admin') >= 0)) { %>
+        <form id="form-pedidoConsumidores" method="POST" action="/pedidoconsumidores">
+          <input type="hidden" name="pedidoConsumidorId" value="<%= pedidoConsumidorId %>">
+          <input type="hidden" name="cicloId" value="<%= ciclo.id %>">
+          <input type="hidden" name="usuarioConsumidorId" value="<%= usuarioConsumidor.id %>">
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">📦 Produtos Disponíveis</h3>
+            </div>
+
+            <div class="search-box">
+              <span class="search-icon" aria-hidden="true">🔍</span>
+              <input
+                type="text"
+                id="searchProduto"
+                class="search-input"
+                placeholder="Digite o nome do produto para filtrar..."
+                aria-label="Buscar produtos"
+              >
+            </div>
+
+            <div class="product-grid" id="productGrid">
+              <% produtosPedidosConsumidorDados.forEach(produto => {
+                const nomeInput = 'quantidade' + produto.id
+                const temEstoque = produto.quantidadeDisponivel > 0
+              %>
+                <div class="product-card <%= produto.quantidade > 0 ? 'has-quantity' : '' %> <%= !temEstoque ? 'out-of-stock' : '' %>"
+                     data-product-id="<%= produto.id %>"
+                     data-valor="<%= produto.valorReferencia %>">
+                  <div class="product-name">
+                    <%= produto.nome %>
+                    <span class="product-measure">(<%= produto.medida %>)</span>
+                  </div>
+
+                  <div class="product-supplier">
+                    👨‍🌾 <%= produto.fornecedores %>
+                  </div>
+
+                  <div class="product-availability">
+                    <span class="availability-number"><%= produto.quantidadeDisponivel %></span>
+                    <span><%= produto.quantidadeDisponivel === 1 ? 'item disponível' : 'itens disponíveis' %></span>
+                  </div>
+
+                  <div class="product-info">
+                    <div class="product-price-info">
+                      <div class="product-price">R$ <%= produto.valorReferencia.toFixed(2).replace('.', ',') %></div>
+                      <div class="product-unit">por <%= produto.medida %></div>
+                    </div>
+
+                    <div class="quantity-control">
+                      <button type="button"
+                              class="quantity-btn"
+                              onclick="decreaseQuantity(<%= produto.id %>)"
+                              aria-label="Diminuir quantidade"
+                              <%= !temEstoque || pedidoFinalizado ? 'disabled' : '' %>>−</button>
+                      <input
+                        type="number"
+                        class="quantity-input"
+                        id="<%= nomeInput %>"
+                        name="<%= nomeInput %>"
+                        value="<%= produto.quantidade || 0 %>"
+                        min="0"
+                        max="<%= produto.quantidadeDisponivel %>"
+                        onchange="handleQuantityChange(<%= produto.id %>, this.value, <%= produto.quantidadeDisponivel %>)"
+                        aria-label="Quantidade de <%= produto.nome %>"
+                        <%= !temEstoque || pedidoFinalizado ? 'disabled' : '' %>
+                      />
+                      <button type="button"
+                              class="quantity-btn"
+                              onclick="increaseQuantity(<%= produto.id %>, <%= produto.quantidadeDisponivel %>)"
+                              aria-label="Aumentar quantidade"
+                              <%= !temEstoque || pedidoFinalizado ? 'disabled' : '' %>>+</button>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+
+          <!-- Bottom Bar -->
+          <% if (!pedidoFinalizado) { %>
+            <div class="bottom-bar">
+              <div class="bottom-bar-content">
+                <div class="total-info">
+                  <span class="total-items"><span id="totalCount">0</span> produtos selecionados</span>
+                  <span class="total-value">R$ <span id="totalGeral">0,00</span></span>
+                </div>
+                <button type="submit"
+                        class="btn-confirm"
+                        name="salvarPedido"
+                        id="submitBtn">
+                  <span>✅</span>
+                  <span>Confirmar Pedido</span>
+                </button>
+              </div>
+            </div>
+          <% } %>
+        </form>
+      <% } %>
     </div>
 
-        
-            <div class="pesquisa">  
-              
-              <div class="pesq_titulo">
-                     ACRESCENTE NOVOS PEDIDOS, SELECIONANDO ABAIXO:
-               </div>
-           
-              <div class="pesq_input">
-                <p>Utilize o filtro de produtos para lhe auxiliar:</p>  
-                <input class="form-control" id="searchProduto" type="text" placeholder="Digite o nome do produto..">
-                <br>
-              </div>
+    <script>
+      // Constantes do pedido
+      const TAXA_POR_ITEM = 0.5;
+      const PEDIDO_FINALIZADO = <%= pedidoFinalizado ? 'true' : 'false' %>;
 
-              <!--<div class="container_salvar">
-                <%if (statusPedido == 'finalizado') { %>
-                  <button class="buy--btn"
-                                form="form-pedidoConsumidores"
-                                type="submitSalvar" 
-                                title="Finalizar Pedido"
-                                name="finalizarPedido"
-                                disabled>
-                                PEDIDO FINALIZADO</button>
-                <% } else { %>
-                  <button class="buy--btn"
-                                form="form-pedidoConsumidores"
-                                type="submitSalvar" 
-                                title="Salvar Dados"
-                                name="salvarPedido">
-                                CONFIRMAR PEDIDO</button>
-                  <button class="buy--btn"
-                                form="form-pedidoConsumidores"
-                                type="submitSalvar" 
-                                title="Finalizar Pedido"
-                                name="finalizarPedido">
-                                FINALIZAR PEDIDO</button>
-                <% } %>
-              </div>-->
-              
+      // ============================================
+      // FUNÇÕES DE UTILIDADE
+      // ============================================
+      function replaceSpecialChars(str) {
+        if (!str) return '';
+        return str.toString()
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+      }
 
-            </div>
-        
-          
-            <div id="principal">
-              <div class="cardsPedidoConsumidor">
-                
-                      <%  produtosPedidosConsumidorDados.forEach(produtoPedidoConsumidorDados => {
-                          nomeInput = 'quantidade' + produtoPedidoConsumidorDados.id.toString()
-                          nomeColap = 'beneficio' + produtoPedidoConsumidorDados.id.toString()
-                
-                      %>
-                      <section class="product">
-                        <div class="productInfo">
-                          <div class="title" >
-                              <h1>
-                                <%= produtoPedidoConsumidorDados.nome %>
-                                &nbsp;(<%= produtoPedidoConsumidorDados.medida%>)
-                              </h1>
-                              <span>Fornecedor:&nbsp;&nbsp;<%= produtoPedidoConsumidorDados.fornecedores %></span><br>
-           
-                                <% if (produtoPedidoConsumidorDados.quantidadeDisponivel == 1) { %> 
-                                  <span class="quantItemDisp"> <%= produtoPedidoConsumidorDados.quantidadeDisponivel %></span><span>&nbsp;&nbsp;item disponível</span>
-                                <% } else { %>
-                                  <span class="quantItemDisp"> <%= produtoPedidoConsumidorDados.quantidadeDisponivel %></span><span>&nbsp;&nbsp;itens disponíveis</span>
-                                <% } %>
-                          </div>
+      function formatarValor(valor) {
+        return valor.toFixed(2).replace('.', ',');
+      }
 
-                          <div class="price" >
-                              R$ <span><%= produtoPedidoConsumidorDados.valorReferencia.toFixed(2).replace('.',',' ) %></span>
-                          </div>
-                          
-                          <div class="quantity">
-                            <%if (statusPedido == 'finalizado') { %>
-                              <% if ( usuarioAtivo.perfil) {
-                                   if ( usuarioAtivo.perfil.indexOf('admin') >= 0 ) { %>
-                                    <select class="form-select"
-                                        aria-label="Selecione a quantidade"
-                                        id= "<%= nomeInput %>"
-                                        name="<%= nomeInput %>">
-                                        <% for (let index = 0; index <= produtoPedidoConsumidorDados.quantidadeDisponivel; index++) {
-                                          %>
-                                          <% if (index == produtoPedidoConsumidorDados.quantidade) {%>
-                                              <option value="<%=index%>" selected><%=index%></option>
-                                          <% } else { %>
-                                              <option value="<%=index%>"><%=index%></option>
-                                          <% } %>
-                                        <% } %>
-                                    </select>
-                              <% } else { %>
-                                    <select class="form-select"
-                                            aria-label="Selecione a quantidade"
-                                            id= "<%= nomeInput %>"
-                                            name="<%= nomeInput %>"
-                                            disabled>
-                                        <% for (let index = 0; index <= produtoPedidoConsumidorDados.quantidadeDisponivel; index++) {
-                                          %>
-                                          <% if (index == produtoPedidoConsumidorDados.quantidade) {%>
-                                              <option value="<%=index%>" selected><%=index%></option>
-                                          <% } else { %>
-                                              <option value="<%=index%>"><%=index%></option>
-                                          <% } %>
-                                        <% } %>
-                                    </select>
-                              <% }} %>
-                            <% } else { %>
-                                <select class="form-select"
-                                        aria-label="Selecione a quantidade"
-                                        id= "<%= nomeInput %>"
-                                        name="<%= nomeInput %>">
-                                    <% for (let index = 0; index <= produtoPedidoConsumidorDados.quantidadeDisponivel; index++) {
-                                      %>
-                                      <% if (index == produtoPedidoConsumidorDados.quantidade) {%>
-                                          <option value="<%=index%>" selected><%=index%></option>
-                                      <% } else { %>
-                                          <option value="<%=index%>"><%=index%></option>
-                                      <% } %>
-                                    <% } %>
-                                </select>
-                             <% } %>
-                            </div>
+      // ============================================
+      // DROPDOWN DE USUÁRIOS
+      // ============================================
+      function toggleDropdown() {
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) {
+          dropdown.classList.toggle('active');
+        }
+      }
 
-                          <!--<div class="description">
-                            <a data-toggle="collapse" data-target="#<%=nomeColap%>">BENEFÍCIOS E USO<br>(clique para ver):</a>
-                            <div id="<%=nomeColap%>" class="collapse">
-                                <ul>
-                                    <li>Benefício 01</li>
-                                    <li>Uso 01</li>
-                                    <li>Em breve teremos os benefícios e usos listados aqui!</li>
-                                </ul>
-                            </div>
-                            
-                        </div>-->
+      document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('active');
+        }
+      });
 
-                          <!--<div class="description">
-                            <a data-toggle="collapse" data-target="#<%=nomeColap%>">BENEFÍCIOS E USO<br>(clique para ver):</a>
-                            <div id="<%=nomeColap%>" class="collapse">
-                                <ul>
-                                    <li>Benefício 01</li>
-                                    <li>Uso 01</li>
-                                    <li>Em breve teremos os benefícios e usos listados aqui!</li>
-                                </ul>
-                            </div>
-                            
-                        </div>-->
-                        
-                        </div>
-                      </section>
-                    <% }) %>
-                  </div>
-                    
-                
-                
-              </div><!-- end cardPedidoFornecedor -->
+      const searchUsuario = document.getElementById('searchUsuario');
+      if (searchUsuario) {
+        searchUsuario.addEventListener('keyup', function() {
+          const value = replaceSpecialChars(this.value);
+          const items = document.querySelectorAll('.dropdown-item');
+          items.forEach(item => {
+            const text = replaceSpecialChars(item.textContent);
+            item.style.display = text.includes(value) ? 'block' : 'none';
+          });
+        });
+      }
 
-              <!--<div class="pesquisa"> --> 
+      // ============================================
+      // BUSCA DE PRODUTOS
+      // ============================================
+      const searchProduto = document.getElementById('searchProduto');
+      if (searchProduto) {
+        searchProduto.addEventListener('keyup', function() {
+          const value = replaceSpecialChars(this.value);
+          const products = document.querySelectorAll('.product-card');
+          products.forEach(product => {
+            const text = replaceSpecialChars(product.textContent);
+            product.style.display = text.includes(value) ? 'flex' : 'none';
+          });
+        });
+      }
 
-<div class="container_confirmar">
-  <%if (statusPedido == 'finalizado') { %>
-    <% if ( usuarioAtivo.perfil) {
-        if ( usuarioAtivo.perfil.indexOf('admin') >= 0 ) { %>
-          <button class="buy--btn"
-                  form="form-pedidoConsumidores"
-                  type="submitSalvar" 
-                  title="Salvar Dados"
-                  name="salvarPedido">
-                  CONFIRMAR PEDIDO</button>
-        <% } else { %>
-          <button class="buy--btn"
-                        form="form-pedidoConsumidores"
-                        type="submitSalvar" 
-                        title="Finalizar Pedido"
-                        name="finalizarPedido"
-                        disabled>
-                        PEDIDO FINALIZADO</button>
-    <% }} %>
-  <% } else { %>
-    <button class="buy--btn"
-                  form="form-pedidoConsumidores"
-                  type="submitSalvar" 
-                  title="Salvar Dados"
-                  name="salvarPedido">
-                  CONFIRMAR PEDIDO</button>
-    <!--<button class="buy--btn"
-                  form="form-pedidoConsumidores"
-                  type="submitSalvar" 
-                  title="Finalizar Pedido"
-                  name="finalizarPedido">
-                  FINALIZAR PEDIDO</button>-->
-  <% } %>
-</div>
+      // ============================================
+      // CONTROLE DE QUANTIDADE
+      // ============================================
+      function decreaseQuantity(productId) {
+        if (PEDIDO_FINALIZADO) return;
 
-<!--</div>-->
-            
-            </div><!-- end listaprodutos -->
+        const input = document.getElementById('quantidade' + productId);
+        const currentValue = parseInt(input.value) || 0;
+        if (currentValue > 0) {
+          input.value = currentValue - 1;
+          updateProductCard(productId, currentValue - 1);
+          updateTotals();
+        }
+      }
 
-            
-  
-        </form>
-      </main>
- 
-  </div><!-- end container -->
+      function increaseQuantity(productId, maxQuantidade) {
+        if (PEDIDO_FINALIZADO) return;
 
+        const input = document.getElementById('quantidade' + productId);
+        const currentValue = parseInt(input.value) || 0;
+        if (currentValue < maxQuantidade) {
+          input.value = currentValue + 1;
+          updateProductCard(productId, currentValue + 1);
+          updateTotals();
+        } else {
+          Feedback.warning('⚠️ Quantidade máxima disponível: ' + maxQuantidade);
+        }
+      }
+
+      function handleQuantityChange(productId, value, maxQuantidade) {
+        if (PEDIDO_FINALIZADO) return;
+
+        let quantidade = parseInt(value) || 0;
+
+        // Validar limites
+        if (quantidade < 0) quantidade = 0;
+        if (quantidade > maxQuantidade) {
+          quantidade = maxQuantidade;
+          Feedback.warning('⚠️ Quantidade máxima disponível: ' + maxQuantidade);
+        }
+
+        const input = document.getElementById('quantidade' + productId);
+        input.value = quantidade;
+
+        updateProductCard(productId, quantidade);
+        updateTotals();
+      }
+
+      function updateProductCard(productId, quantity) {
+        const card = document.querySelector(`[data-product-id="${productId}"]`);
+        if (card) {
+          if (quantity > 0) {
+            card.classList.add('has-quantity');
+          } else {
+            card.classList.remove('has-quantity');
+          }
+        }
+      }
+
+      // ============================================
+      // CÁLCULO DE TOTAIS
+      // ============================================
+      function updateTotals() {
+        const cards = document.querySelectorAll('.product-card');
+        let totalProdutos = 0;
+        let totalItens = 0;
+        let countProdutos = 0;
+
+        cards.forEach(card => {
+          const productId = card.dataset.productId;
+          const valor = parseFloat(card.dataset.valor) || 0;
+          const input = document.getElementById('quantidade' + productId);
+          const quantidade = parseInt(input?.value) || 0;
+
+          if (quantidade > 0) {
+            totalProdutos += quantidade * valor;
+            totalItens += quantidade;
+            countProdutos++;
+          }
+        });
+
+        const taxaAdministrativa = totalItens * TAXA_POR_ITEM;
+        const totalGeral = totalProdutos + taxaAdministrativa;
+
+        // Atualizar elementos na tela
+        const totalCountEl = document.getElementById('totalCount');
+        const totalGeralEl = document.getElementById('totalGeral');
+
+        if (totalCountEl) totalCountEl.textContent = countProdutos;
+        if (totalGeralEl) totalGeralEl.textContent = formatarValor(totalGeral);
+      }
+
+      // ============================================
+      // INICIALIZAÇÃO
+      // ============================================
+      document.addEventListener('DOMContentLoaded', function() {
+        // Atualizar visual dos cards com quantidade
+        const inputs = document.querySelectorAll('.quantity-input');
+        inputs.forEach(input => {
+          const productId = input.id.replace('quantidade', '');
+          const value = parseInt(input.value) || 0;
+          updateProductCard(productId, value);
+        });
+
+        // Calcular totais iniciais
+        updateTotals();
+
+        // Adicionar padding no body para o bottom bar
+        const bottomBar = document.querySelector('.bottom-bar');
+        if (bottomBar) {
+          document.body.style.paddingBottom = '100px';
+        }
+      });
+    </script>
   </body>
 </html>
- 
