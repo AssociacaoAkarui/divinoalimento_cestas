@@ -251,16 +251,23 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 /tests/
 └── unit/
     ├── services/
-    │   └── oferta.service.test.js  # ✅ 9 testes
+    │   ├── api.service.test.js               # ✅ 14 testes (NOVO)
+    │   ├── oferta.service.test.js            # ✅ 9 testes
+    │   └── pedidoConsumidores.service.test.js # ✅ 14 testes (NOVO)
     └── utils/
-        └── feedback.test.js        # ✅ 21 testes
+        └── feedback.test.js                  # ✅ 21 testes
 
 /features/
-├── *.feature              # BDD backend
+├── *.feature              # 14 features BDD backend
 └── step_definitions/
     └── support/
-        └── page-objects/  # Page Objects para E2E
+        └── factories.js   # Factories para testes
 ```
+
+**Nota sobre testes E2E:**
+- Testes de UI (Puppeteer) foram removidos (incompatibilidade Mac ARM)
+- Testes de interface serão feitos **manualmente**
+- Foco em testes BDD backend + testes unitários
 
 ---
 
@@ -321,18 +328,21 @@ Para cada tela a ser modernizada, seguir:
 |---------|-------|------|---|
 | Views com CSS modular | 2 | 44 | 5% |
 | Views com JS modular | 2 | 15* | 13% |
-| Testes unitários JS | 30 | 100 | 30% |
-| Testes E2E | 10 | 50 | 20% |
+| Testes unitários JS | 58 | 100 | 58% |
+| Testes E2E | 0 | Manual | N/A |
 
 *Nem todas as views precisam de JS modular
+**Testes E2E removidos - interface testada manualmente
 
 ### Cobertura de Testes
 
 | Tipo | Cenários/Testes | Status |
 |------|-----------------|--------|
-| BDD Backend | 11 features | ✅ |
-| Unit Frontend | 30 testes | ✅ |
-| E2E Interface | 10 cenários | ✅ |
+| BDD Backend | 14 features | ✅ |
+| Unit Frontend (Services) | 37 testes (3 arquivos) | ✅ |
+| Unit Frontend (Utils) | 21 testes (1 arquivo) | ✅ |
+| **Total Unitários** | **58 testes** | ✅ |
+| E2E Interface | ~~10 cenários~~ Removido | ⚠️ Manual |
 
 ---
 
@@ -362,7 +372,27 @@ Para cada tela a ser modernizada, seguir:
   - Removidos 10 arquivos obsoletos (~2.100 linhas)
 - 📊 10 commits realizados (5 fixes + 1 refactor + 3 docs + 1 chore)
 
+### 2025-11-22 - Remoção de Testes E2E e Expansão de Testes Unitários
+- ❌ Removidos testes E2E com Puppeteer (4 arquivos, ~750 linhas)
+  - `oferta-ui.feature` (10 cenários)
+  - `oferta_ui_steps.js`
+  - `browser-helper.js`
+  - `page-objects/oferta-page.js`
+  - Razão: Incompatibilidade Mac ARM + Docker
+- ✅ Removida dependência Puppeteer (70 pacotes)
+- ✅ Atualizado Rakefile com tasks de teste
+  - `rake testes:test` - Todos os testes (BDD + Unit)
+  - `rake testes:bdd` - Apenas BDD backend
+  - `rake testes:unit` - Apenas testes unitários
+- ✅ **Fase 1 - Testes Unitários de Services Frontend**
+  - Criado `api.service.test.js` (14 testes)
+  - Criado `pedidoConsumidores.service.test.js` (14 testes)
+  - Total: +28 testes unitários
+  - **58 testes unitários** no total (100% passando)
+- 📊 Cobertura de services: 3/3 (api, oferta, pedidoConsumidores)
+- ⚠️ Testes de UI agora são **manuais**
+
 ---
 
-**Última atualização**: 2025-11-21
+**Última atualização**: 2025-11-22
 **Documento gerado por**: Claude Code Agent
