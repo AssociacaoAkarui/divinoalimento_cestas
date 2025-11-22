@@ -134,10 +134,10 @@ namespace :testes do
     sh "docker compose -f #{COMPOSE_TESTS} exec -T app_tests.dev npm install"
   end
 
-  desc 'Executar todos os testes não pendentes'
-  desc 'Uso: rake testes:test # rápido (só pontos)'
-  desc '      rake testes:test[detalhe] # detalhe é opcional e mostra cada step + backtrace'
-  task :test, [:detalhe] do |_, args|
+  desc 'Executar testes BDD (backend) não pendentes'
+  desc 'Uso: rake testes:bdd # rápido (só pontos)'
+  desc '      rake testes:bdd[detalhe] # detalhe é opcional e mostra cada step + backtrace'
+  task :bdd, [:detalhe] do |_, args|
     args.with_defaults(detalhe: 'false')
 
     flags = []
@@ -147,7 +147,7 @@ namespace :testes do
       flags << '--format-options \'{"colorsEnabled": true}\''
       flags << '--backtrace'
       puts "\n#{'='*60}"
-      puts "🐛 DEBUG"
+      puts "🧪 TESTES BDD (BACKEND)"
       puts "#{'='*60}"
       puts "📊 Mostra cada step + backtrace de erros (excluindo @pending)"
       puts "#{'='*60}\n\n"
@@ -157,6 +157,38 @@ namespace :testes do
     cmd += " -- #{flags.join(' ')}" unless flags.empty?
 
     sh cmd
+  end
+
+  desc 'Executar testes unitários (Mocha)'
+  task :unit do
+    puts "\n#{'='*60}"
+    puts "🔬 TESTES UNITÁRIOS (MOCHA)"
+    puts "#{'='*60}"
+    puts "📦 Services e Utils"
+    puts "#{'='*60}\n\n"
+
+    sh "docker compose -f #{COMPOSE_TESTS} exec -T app_tests.dev npm run test:unit"
+  end
+
+  desc 'Executar TODOS os testes (BDD + Unitários)'
+  task :test do
+    puts "\n#{'='*60}"
+    puts "🚀 EXECUTANDO TODOS OS TESTES"
+    puts "#{'='*60}\n"
+
+    puts "\n#{'='*60}"
+    puts "🧪 TESTES BDD (BACKEND)"
+    puts "#{'='*60}\n"
+    sh "docker compose -f #{COMPOSE_TESTS} exec -T app_tests.dev npm test -- --tags \"not @pending\""
+
+    puts "\n#{'='*60}"
+    puts "🔬 TESTES UNITÁRIOS (MOCHA)"
+    puts "#{'='*60}\n"
+    sh "docker compose -f #{COMPOSE_TESTS} exec -T app_tests.dev npm run test:unit"
+
+    puts "\n#{'='*60}"
+    puts "✅ TODOS OS TESTES CONCLUÍDOS"
+    puts "#{'='*60}\n"
   end
 
   desc 'Executar TODOS os testes (incluindo pendentes)'
