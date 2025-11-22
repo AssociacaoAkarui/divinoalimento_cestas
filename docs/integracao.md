@@ -36,7 +36,6 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 | **CSS Modular** | CSS extraído para arquivo externo |
 | **JS Service** | JavaScript modularizado (API calls) |
 | **Testes Unit** | Testes unitários (Mocha) |
-| **Testes E2E** | Testes de interface (Puppeteer) |
 
 ---
 
@@ -44,111 +43,111 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 
 ### AUTENTICAÇÃO E USUÁRIOS
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 1 | `index.ejs` | `IndexController` | `Usuario`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 2 | `usuario.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 3 | `usuario-index.ejs` | `UsuarioIndexController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 4 | `usuario-edit.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 5 | `usuarionovo.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 1 | `index.ejs` | `IndexController` | `Usuario`✅ | ❌ | ❌ | ❌ | ❌ |
+| 2 | `usuario.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ |
+| 3 | `usuario-index.ejs` | `UsuarioIndexController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ |
+| 4 | `usuario-edit.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ |
+| 5 | `usuarionovo.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | ❌ | ❌ | ❌ |
 
 ### CICLOS
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 7 | `ciclo.ejs` | `CicloController`✅ | `Ciclo`✅ `CicloCestas`✅ `CicloEntregas`✅ `CicloProdutos`✅ | ❌ | `ciclo.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 8 | `ciclo-index.ejs` | `CicloIndexController`✅ | `Ciclo`✅ | ❌ | `ciclo.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 9 | `ciclo-edit.ejs` | `CicloController`✅ | `Ciclo`✅ | ❌ | `ciclo.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 7 | `ciclo.ejs` | `CicloController`✅ | `Ciclo`✅ `CicloCestas`✅ `CicloEntregas`✅ `CicloProdutos`✅ | ❌ | `ciclo.feature`🧪 | ❌ | ❌ |
+| 8 | `ciclo-index.ejs` | `CicloIndexController`✅ | `Ciclo`✅ | ❌ | `ciclo.feature`🧪 | ❌ | ❌ |
+| 9 | `ciclo-edit.ejs` | `CicloController`✅ | `Ciclo`✅ | ❌ | `ciclo.feature`🧪 | ❌ | ❌ |
 
 ### CESTAS
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 10 | `cesta.ejs` | `CestaController`✅ | `Cesta`✅ | ❌ | `cesta.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 11 | `cesta-index.ejs` | `CestaIndexController`✅ | `Cesta`✅ | ❌ | `cesta.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 12 | `cesta-edit.ejs` | `CestaController`✅ | `Cesta`✅ | ❌ | `cesta.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 10 | `cesta.ejs` | `CestaController`✅ | `Cesta`✅ | ❌ | `cesta.feature`🧪 | ❌ | ❌ |
+| 11 | `cesta-index.ejs` | `CestaIndexController`✅ | `Cesta`✅ | ❌ | `cesta.feature`🧪 | ❌ | ❌ |
+| 12 | `cesta-edit.ejs` | `CestaController`✅ | `Cesta`✅ | ❌ | `cesta.feature`🧪 | ❌ | ❌ |
 
 ### PRODUTOS
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 13 | `produto.ejs` | `ProdutoController`✅ | `Produto`✅ | ❌ | `produto.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 14 | `produto-index.ejs` | `ProdutoIndexController`✅ | `Produto`✅ | ❌ | `produto.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 15 | `produto-edit.ejs` | `ProdutoController`✅ | `Produto`✅ | ❌ | `produto.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 13 | `produto.ejs` | `ProdutoController`✅ | `Produto`✅ | ❌ | `produto.feature`🧪 | ❌ | ❌ |
+| 14 | `produto-index.ejs` | `ProdutoIndexController`✅ | `Produto`✅ | ❌ | `produto.feature`🧪 | ❌ | ❌ |
+| 15 | `produto-edit.ejs` | `ProdutoController`✅ | `Produto`✅ | ❌ | `produto.feature`🧪 | ❌ | ❌ |
 
 ### CATEGORIAS
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 16 | `categoria.ejs` | `CategoriaController`✅ | `CategoriaProdutos`✅ | ❌ | `categoriaprodutos.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 17 | `categoria-index.ejs` | `CategoriaIndexController`✅ | `CategoriaProdutos`✅ | ❌ | `categoriaprodutos.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 18 | `categoria-edit.ejs` | `CategoriaController`✅ | `CategoriaProdutos`✅ | ❌ | `categoriaprodutos.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 16 | `categoria.ejs` | `CategoriaController`✅ | `CategoriaProdutos`✅ | ❌ | `categoriaprodutos.feature`🧪 | ❌ | ❌ |
+| 17 | `categoria-index.ejs` | `CategoriaIndexController`✅ | `CategoriaProdutos`✅ | ❌ | `categoriaprodutos.feature`🧪 | ❌ | ❌ |
+| 18 | `categoria-edit.ejs` | `CategoriaController`✅ | `CategoriaProdutos`✅ | ❌ | `categoriaprodutos.feature`🧪 | ❌ | ❌ |
 
 ### PONTOS DE ENTREGA
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 19 | `pontoentrega.ejs` | `PontoEntregaController`✅ | `PontoEntrega`✅ | ❌ | `pontoentrega.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 20 | `pontoentrega-index.ejs` | `PontoEntregaIndexController`✅ | `PontoEntrega`✅ | ❌ | `pontoentrega.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 21 | `pontoentrega-edit.ejs` | `PontoEntregaController`✅ | `PontoEntrega`✅ | ❌ | `pontoentrega.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 19 | `pontoentrega.ejs` | `PontoEntregaController`✅ | `PontoEntrega`✅ | ❌ | `pontoentrega.feature`🧪 | ❌ | ❌ |
+| 20 | `pontoentrega-index.ejs` | `PontoEntregaIndexController`✅ | `PontoEntrega`✅ | ❌ | `pontoentrega.feature`🧪 | ❌ | ❌ |
+| 21 | `pontoentrega-edit.ejs` | `PontoEntregaController`✅ | `PontoEntrega`✅ | ❌ | `pontoentrega.feature`🧪 | ❌ | ❌ |
 
 ### OFERTAS (FORNECEDORES)
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 22 | `oferta.ejs` | `OfertaController`✅ | `Oferta`✅ `OfertaProdutos`✅ | `OfertaService`✅ | `oferta.feature`🧪 | `common.css`✅ `pages/oferta.css`✅ | `api.service.js`✅ `oferta.service.js`✅ | `oferta.service.test.js`✅🧪 | `oferta-ui.feature`✅🧪 |
-| 23 | `oferta-index.ejs` | `OfertaIndexController`✅ | `Oferta`✅ | ❌ | `oferta.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 22 | `oferta.ejs` | `OfertaController`✅ | `Oferta`✅ `OfertaProdutos`✅ | `OfertaService`✅ | `oferta.feature`🧪 | `common.css`✅ `pages/oferta.css`✅ | `api.service.js`✅ `oferta.service.js`✅ | `oferta.service.test.js`✅🧪 |
+| 23 | `oferta-index.ejs` | `OfertaIndexController`✅ | `Oferta`✅ | ❌ | `oferta.feature`🧪 | ❌ | ❌ |
 
 ### COMPOSIÇÃO DE CESTAS
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 24 | `composicao.ejs` | `ComposicaoController`✅ | `Composicoes`✅ `ComposicaoOfertaProdutos`✅ `ComposicaoCestaProdutos`✅ `ComposicaoCestaOpcoes`✅ | ❌ | `composicao.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 25 | `composicaoofertassobras.ejs` | `ComposicaoController`✅ | `Composicoes`✅ | ❌ | `composicao.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 26 | `composicaoofertassobrasConfirmacao.ejs` | `ComposicaoController`✅ | `Composicoes`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 27 | `composicaopedidosextras.ejs` | `ComposicaoController`✅ | `Composicoes`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 28 | `composicaopedidosextrasConfirmacao.ejs` | `ComposicaoController`✅ | `Composicoes`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 24 | `composicao.ejs` | `ComposicaoController`✅ | `Composicoes`✅ `ComposicaoOfertaProdutos`✅ `ComposicaoCestaProdutos`✅ `ComposicaoCestaOpcoes`✅ | ❌ | `composicao.feature`🧪 | ❌ | ❌ | ❌ |
+| 25 | `composicaoofertassobras.ejs` | `ComposicaoController`✅ | `Composicoes`✅ | ❌ | `composicao.feature`🧪 | ❌ | ❌ | ❌ |
+| 26 | `composicaoofertassobrasConfirmacao.ejs` | `ComposicaoController`✅ | `Composicoes`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 27 | `composicaopedidosextras.ejs` | `ComposicaoController`✅ | `Composicoes`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 28 | `composicaopedidosextrasConfirmacao.ejs` | `ComposicaoController`✅ | `Composicoes`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### PEDIDOS DE CONSUMIDORES
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 29 | `pedidoConsumidores.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ `PedidoConsumidoresProdutos`✅ | `PedidoConsumidoresService`✅ | `pedidoconsumidores.feature`🧪 | `common.css`✅ `pages/pedidoConsumidores.css`✅ | `api.service.js`✅ `pedidoConsumidores.service.js`✅ | ❌ | ❌ |
-| 30 | `pedidoConsumidoresConfirmacao.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ | ❌ | `pedidoconsumidores.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 31 | `pedidosConsumidoresTodos.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 32 | `pedidosConsumidoresCiclos.ejs` | `RelatorioController`✅ | `PedidoConsumidores`✅ `Ciclo`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 33 | `pedidosConsumidoresCiclosProdutos.ejs` | `RelatorioController`✅ | `PedidoConsumidores`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 34 | `pedidosConsumidoresCiclosSelecao.ejs` | `RelatorioController`✅ | `Ciclo`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 29 | `pedidoConsumidores.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ `PedidoConsumidoresProdutos`✅ | `PedidoConsumidoresService`✅ | `pedidoconsumidores.feature`🧪 | `common.css`✅ `pages/pedidoConsumidores.css`✅ | `api.service.js`✅ `pedidoConsumidores.service.js`✅ | ❌ |
+| 30 | `pedidoConsumidoresConfirmacao.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ | ❌ | `pedidoconsumidores.feature`🧪 | ❌ | ❌ | ❌ |
+| 31 | `pedidosConsumidoresTodos.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 32 | `pedidosConsumidoresCiclos.ejs` | `RelatorioController`✅ | `PedidoConsumidores`✅ `Ciclo`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 33 | `pedidosConsumidoresCiclosProdutos.ejs` | `RelatorioController`✅ | `PedidoConsumidores`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 34 | `pedidosConsumidoresCiclosSelecao.ejs` | `RelatorioController`✅ | `Ciclo`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### RELATÓRIOS FORNECEDORES
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 35 | `pedidosFornecedoresTodos.ejs` | `ComposicaoController`✅ | `Oferta`✅ `OfertaProdutos`✅ | ❌ | `relatorios.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 36 | `pedidosFornecedoresIndiv.ejs` | `ComposicaoController`✅ | `Oferta`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 37 | `pedidosFornecedoresSobra.ejs` | `ComposicaoController`✅ | `Oferta`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 38 | `pedidosFornecedoresCiclos.ejs` | `RelatorioController`✅ | `Oferta`✅ `Ciclo`✅ | ❌ | `relatorios.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 39 | `pedidosFornecedoresCiclosSelecao.ejs` | `RelatorioController`✅ | `Ciclo`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 35 | `pedidosFornecedoresTodos.ejs` | `ComposicaoController`✅ | `Oferta`✅ `OfertaProdutos`✅ | ❌ | `relatorios.feature`🧪 | ❌ | ❌ | ❌ |
+| 36 | `pedidosFornecedoresIndiv.ejs` | `ComposicaoController`✅ | `Oferta`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 37 | `pedidosFornecedoresSobra.ejs` | `ComposicaoController`✅ | `Oferta`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 38 | `pedidosFornecedoresCiclos.ejs` | `RelatorioController`✅ | `Oferta`✅ `Ciclo`✅ | ❌ | `relatorios.feature`🧪 | ❌ | ❌ | ❌ |
+| 39 | `pedidosFornecedoresCiclosSelecao.ejs` | `RelatorioController`✅ | `Ciclo`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### RELATÓRIOS DE PRODUTOS
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 40 | `relatorioProdutosCiclos.ejs` | `RelatorioController`✅ | `Produto`✅ `Ciclo`✅ | ❌ | `relatorios.feature`🧪 | ❌ | ❌ | ❌ | ❌ |
-| 41 | `relatorioProdutosCiclosSelecao.ejs` | `RelatorioController`✅ | `Ciclo`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 40 | `relatorioProdutosCiclos.ejs` | `RelatorioController`✅ | `Produto`✅ `Ciclo`✅ | ❌ | `relatorios.feature`🧪 | ❌ | ❌ | ❌ |
+| 41 | `relatorioProdutosCiclosSelecao.ejs` | `RelatorioController`✅ | `Ciclo`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### MOVIMENTAÇÕES
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
-| 42 | `movimentacao.ejs` | `MovimentacaoController`✅ | `Movimentacao`✅ `TipoMovimentacao`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 43 | `movimentacao-index.ejs` | `MovimentacaoIndexController`✅ | `Movimentacao`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 44 | `movimentacaoTodos.ejs` | `MovimentacaoController`✅ | `Movimentacao`✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
+| 42 | `movimentacao.ejs` | `MovimentacaoController`✅ | `Movimentacao`✅ `TipoMovimentacao`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 43 | `movimentacao-index.ejs` | `MovimentacaoIndexController`✅ | `Movimentacao`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 44 | `movimentacaoTodos.ejs` | `MovimentacaoController`✅ | `Movimentacao`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### OUTROS
 
-| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit | Tests E2E |
-|---|------------|------------|----------|---------|-------------|-------------|------------|------------|-----------|
+| # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
+|---|------------|------------|----------|---------|-------------|-------------|------------|------------|
 | 45 | `cadastros.ejs` | N/A (estático) | N/A | N/A | N/A | ❌ | N/A | N/A | N/A |
 
 ---
