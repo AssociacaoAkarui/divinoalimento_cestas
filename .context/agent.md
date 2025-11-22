@@ -1133,3 +1133,238 @@ rake vivo:restart
 **Commit:** `5780e57` - chore: remove arquivos obsoletos e rotas não utilizadas
 
 ---
+
+### 2025-11-22 | Remoção de Testes de UI Não Funcionais
+
+**Objetivo:** Remover testes de interface E2E (Puppeteer) que não funcionavam em Mac ARM, mantendo apenas os testes que funcionam.
+
+#### 🗑️ Arquivos de Teste Removidos
+
+**Testes E2E de Interface (Puppeteer):**
+- `app/features/oferta-ui.feature` (10 cenários E2E)
+- `app/features/step_definitions/oferta_ui_steps.js` (200+ linhas)
+- `app/features/step_definitions/support/browser-helper.js` (200 linhas)
+- `app/features/step_definitions/support/page-objects/oferta-page.js` (350 linhas)
+
+**Total removido:** ~750 linhas de código de testes não funcionais
+
+#### ✅ Testes Mantidos (Funcionando)
+
+**Testes BDD Backend (Cucumber):**
+- 14 features funcionando (`app/features/`)
+  - `categoriaprodutos.feature`
+  - `cesta.feature`
+  - `ciclo.feature`
+  - `composicao.feature`
+  - `mercado.feature`
+  - `oferta.feature` (backend)
+  - `pedidoconsumidores.feature`
+  - `pontoentrega.feature`
+  - `produto.feature`
+  - `produtocomercializavel.feature`
+  - `relatorios.feature`
+  - `sessions.feature`
+  - `submissaoproduto.feature`
+  - `usuario.feature`
+
+**Testes Unitários (Mocha):**
+- `tests/unit/services/oferta.service.test.js` (210 linhas) - 9 testes
+- `tests/unit/utils/feedback.test.js` (309 linhas) - 21 testes
+- **Total:** 30 testes unitários funcionando ✅
+
+**Arquivos de Suporte Mantidos:**
+- `app/features/step_definitions/support/factories.js` (usado pelos testes backend)
+- Todos os step definitions dos testes backend
+- Configuração Mocha (`.mocharc.json`)
+
+#### 📊 Estrutura Final de Testes
+
+```
+app/
+├── features/
+│   ├── *.feature                      # 14 features BDD backend ✅
+│   └── step_definitions/
+│       ├── *_steps.js                 # Step definitions backend ✅
+│       ├── hook.js                    # Hooks dos testes ✅
+│       └── support/
+│           └── factories.js           # Factories para testes ✅
+└── tests/
+    └── unit/
+        ├── services/
+        │   └── oferta.service.test.js  # 9 testes unitários ✅
+        └── utils/
+            └── feedback.test.js        # 21 testes unitários ✅
+```
+
+#### 🎯 Razão da Remoção
+
+Conforme documentado em **2025-11-21**:
+- Puppeteer não funciona corretamente em Mac ARM (Apple Silicon)
+- Erro: `rosetta error: failed to open elf at /lib64/ld-linux-x86-64.so.2`
+- Incompatibilidade Docker + Mac ARM + Puppeteer
+- Decisão: Fazer testes de UI de forma manual
+
+#### ✅ O Que Continua Funcionando
+
+| Tipo | Quantidade | Comando | Status |
+|------|-----------|---------|--------|
+| **BDD Backend** | 14 features | `npm test` | ✅ Funcionando |
+| **Testes Unitários** | 30 testes | `npm run test:unit` | ✅ Funcionando |
+| **UI Manual** | - | Manual | ✅ Estratégia adotada |
+
+#### 📝 Dependências Removidas
+
+- ✅ `puppeteer: ^24.30.0` - Removido do package.json (70 pacotes dependentes removidos)
+- ✅ Script `test:ui` - Removido do package.json
+- ✅ `npm install` executado para atualizar node_modules
+
+#### 🎯 Decisão de Testes
+
+**Mantidos:**
+- ✅ Testes BDD backend (Cucumber) - Testam lógica de negócio
+- ✅ Testes unitários (Mocha) - Testam services e utils
+
+**Removidos:**
+- ❌ Testes E2E de UI (Puppeteer) - Não funcionam em Mac ARM
+
+**Estratégia:**
+- Testes de interface serão feitos de forma **manual**
+- Foco em testes backend e unitários automatizados
+- Se necessário E2E no futuro: usar CI/CD em ambiente Linux x86 ou migrar para Playwright
+
+#### 🔧 Atualização do Rakefile
+
+**Tasks de teste atualizadas:**
+- `rake testes:test` - Executa **TODOS** os testes (BDD + Unitários)
+- `rake testes:bdd` - Executa apenas testes BDD backend (Cucumber)
+- `rake testes:bdd[detalhe]` - BDD com output detalhado
+- `rake testes:unit` - Executa apenas testes unitários (Mocha)
+- `rake testes:all` - Executa todos incluindo @pending
+- `rake testes:funcionalidade[nome]` - Testa funcionalidade específica
+- `rake testes:tags[expressao]` - Testa por tags
+
+**Mudanças:**
+- Renomeado `testes:test` para `testes:bdd` (mais semântico)
+- Criado novo `testes:test` que executa BDD + Unit
+- Adicionado `testes:unit` para testes Mocha
+- Output visual melhorado com separadores
+
+---
+
+### 2025-11-22 | Fase 1 - Testes Unitários de Services (Frontend)
+
+**Objetivo:** Criar testes unitários para os novos services frontend criados nas refatorações anteriores.
+
+#### 📁 Arquivos Criados
+
+**1. Testes para PedidoConsumidoresService**
+- ✅ `app/tests/unit/services/pedidoConsumidores.service.test.js` (~440 linhas)
+  - 14 testes implementados
+  - Cobertura de 6 métodos do service
+
+**2. Testes para ApiService**
+- ✅ `app/tests/unit/services/api.service.test.js` (~340 linhas)
+  - 14 testes implementados
+  - Cobertura completa da classe base
+
+#### 🧪 Cobertura de Testes
+
+**PedidoConsumidoresService (14 testes):**
+- `atualizarQuantidade()` - 3 testes
+  - POST com dados corretos
+  - Retorno de sucesso
+  - Tratamento de erro HTTP
+- `obterProdutosPedido()` - 2 testes
+  - Busca de produtos
+  - Lista vazia
+- `confirmarPedido()` - 2 testes
+  - POST de confirmação
+  - Retorno de sucesso
+- `removerProduto()` - 2 testes
+  - POST para remoção
+  - Retorno de sucesso
+- `calcularTotais()` - 4 testes
+  - Cálculo com produtos
+  - Taxa customizada
+  - Lista vazia
+  - Quantidade zero
+- `formatarValor()` - 2 testes
+  - Formatação R$
+  - Arredondamento
+
+**ApiService (14 testes):**
+- `get()` - 3 testes
+  - GET com sucesso
+  - Erro HTTP
+  - Headers customizados
+- `post()` - 3 testes
+  - POST com body JSON
+  - Erro HTTP
+  - Options customizadas
+- `put()` - 2 testes
+  - PUT com body JSON
+  - Erro HTTP
+- `delete()` - 2 testes
+  - DELETE com sucesso
+  - Erro HTTP
+- `request()` - 4 testes
+  - Merge de headers
+  - Log de erro no console
+  - Propagação de erro
+  - Network error
+
+#### 📊 Estatísticas
+
+| Métrica | Valor |
+|---------|-------|
+| Novos arquivos de teste | 2 |
+| Novos testes | 28 |
+| Linhas de código | ~780 |
+| Services cobertos | 2/3 (falta OfertaService já tem) |
+| Taxa de sucesso | 100% ✅ |
+
+**Total de testes unitários no projeto:**
+- Antes: 30 testes (2 arquivos)
+- Depois: **58 testes (4 arquivos)** ✅
+
+#### ✅ Ferramentas Utilizadas
+
+- **Mocha** - Test runner
+- **Chai** - Assertions
+- **Sinon** - Mocks e stubs (fetch, console.error)
+- **JSDOM** - Não necessário (services puros)
+
+#### 🎯 Padrões Aplicados
+
+1. **Arrange-Act-Assert** - Estrutura clara
+2. **Mock de fetch** - Isolamento de dependências externas
+3. **Stub de console.error** - Não poluir output
+4. **Testes independentes** - beforeEach/afterEach
+5. **Nomenclatura descritiva** - "deve fazer X quando Y"
+6. **Cobertura completa** - Todos os métodos públicos testados
+7. **Edge cases** - Lista vazia, quantidade zero, errors
+
+#### 🚀 Como Executar
+
+```bash
+# Todos os testes unitários
+npm run test:unit
+
+# Localmente (sem Docker)
+cd app && npm run test:unit
+
+# Com Rake
+rake testes:unit
+```
+
+#### 🎯 Próximos Passos
+
+**Fase 2 - Completar BDD de PedidoConsumidores:**
+- PDC-03: Adicionar produto ao pedido
+- PDC-04: Atualizar quantidade
+- PDC-05: Calcular valor total
+- PDC-06: Atualizar status
+- PDC-07: Listar pedido do consumidor
+- PDC-08: Listar pedidos do ciclo
+
+---
