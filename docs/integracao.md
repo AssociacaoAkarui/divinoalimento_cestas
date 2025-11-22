@@ -165,8 +165,7 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 | **Features BDD** | 44 | 11 | 0 | 33 | 25% |
 | **CSS Modular** | 44 | 2 | 0 | 42 | 5% |
 | **JS Services** | 44 | 2 | 0 | 42 | 5% |
-| **Tests Unit** | 44 | 1 | 0 | 43 | 2% |
-| **Tests E2E** | 44 | 1 | 0 | 43 | 2% |
+| **Tests Unit** | 44 | 2 | 0 | 42 | 5% |
 
 ### Modelos DB Existentes (20)
 
