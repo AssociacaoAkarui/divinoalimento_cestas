@@ -1251,6 +1251,204 @@ Conforme documentado em **2025-11-21**:
 
 ---
 
+### 2025-11-25 | Implementação Completa dos Testes BDD de PedidoConsumidores
+
+**Objetivo:** Completar todos os cenários de teste BDD pendentes (PDC-02 a PDC-08) para o módulo PedidoConsumidores.
+
+#### ✅ Resultado Final
+
+- **9 de 9 cenários passando (100%)**
+- **47 steps executados com sucesso**
+- **8 novos métodos implementados no PedidoConsumidoresService**
+
+#### 🏗️ Trabalho Realizado
+
+**1. Implementação de 8 Métodos no PedidoConsumidoresService**
+
+Arquivo: `app/src/services/services.js`
+
+**Métodos criados:**
+- `buscarPedidoPorId(pedidoId, options)` - Busca pedido com includes (Usuario, Ciclo, Produtos)
+- `adicionarProdutoAoPedido(pedidoId, produtoId, quantidade, valorOferta, valorCompra)` - Adiciona/atualiza produto
+- `atualizarQuantidadeProduto(pedidoId, produtoId, quantidade)` - Atualiza quantidade específica
+- `calcularValorTotalPedido(pedidoId)` - Calcula total do pedido
+- `atualizarStatusPedido(pedidoId, novoStatus)` - Atualiza status do pedido
+- `listarProdutosDoPedido(pedidoId)` - Lista produtos com detalhes
+- `listarPedidosDoConsumidor(usuarioId)` - Lista todos os pedidos do consumidor
+- `listarPedidosDoCiclo(cicloId)` - Lista todos os pedidos de um ciclo
+
+**2. Correção Crítica no Model PedidoConsumidores**
+
+Arquivo: `app/models/pedidoconsumidores.js`
+
+**Problema:** FOREIGN KEY constraint failed
+- Modelo estava definindo `cicloId` e `usuarioId` em `init()` com objeto `references`
+- Causava conflito de sincronização no SQLite
+
+**Solução:** Seguir padrão do modelo Oferta
+- Removidos `cicloId` e `usuarioId` de `init()`
+- FKs permanecem APENAS nas migrations
+- Associações definidas no `associate()`
+
+```javascript
+// ANTES (ERRADO)
+PedidoConsumidores.init({
+  status: DataTypes.STRING,
+  observacao: DataTypes.STRING,
+  cicloId: {
+    type: DataTypes.INTEGER,
+    references: { model: 'Ciclos', key: 'id' }
+  },
+  // ...
+}, { sequelize, modelName: 'PedidoConsumidores' });
+
+// DEPOIS (CORRETO - seguindo padrão Oferta)
+PedidoConsumidores.init({
+  status: DataTypes.STRING,
+  observacao: DataTypes.STRING,
+  // cicloId e usuarioId removidos
+}, { sequelize, modelName: 'PedidoConsumidores' });
+```
+
+**3. Atualização da Feature File**
+
+Arquivo: `app/features/pedidoconsumidores.feature`
+
+- Removidos `@pending` de PDC-02 a PDC-08
+- Adicionada step "Dado que existe um ciclo ativo" em todos os cenários
+
+**4. Implementação Completa dos Steps**
+
+Arquivo: `app/features/step_definitions/pedidoconsumidores_steps.js`
+
+**Melhorias implementadas:**
+- Adicionado Before hook para resetar variáveis globais (solução para "Usuário não encontrado")
+- Implementados 7 novos cenários (PDC-02 a PDC-08)
+- Uso consistente de `service.criarPedidoConsumidor()` ao invés de `Model.create()`
+- Step condicional para "salvo as alterações" (usado em PDC-04 e PDC-06)
+
+**Before Hook crítico:**
+```javascript
+Before({ tags: "@pedidoconsumidores" }, function () {
+  novoPedido = {};
+  pedidoCriado = null;
+  usuarioCriado = null;
+  pedidoAtual = null;
+  // ... reset all globals
+});
+```
+
+**5. Factory para Testes**
+
+Arquivo: `app/features/step_definitions/support/factories.js`
+
+- Criada `PedidoConsumidoresProdutosFactory` com Faker
+
+#### 🐛 Problemas Encontrados e Soluções
+
+**Erro 1: FOREIGN KEY constraint failed**
+- **Causa:** Model definia FKs em init() + migrations
+- **Solução:** Remover FKs de init(), seguir padrão Oferta
+- **Insight:** Comparação com modelo Oferta revelou o padrão correto
+
+**Erro 2: "Usuário com ID 1 não encontrado"**
+- **Causa:** Variável global `usuarioCriado` retinha ID entre testes
+- **Solução:** Before hook para resetar todas as variáveis
+
+**Erro 3: "pedidoConsumidoresService is not defined"**
+- **Causa:** Faltava declaração do service em alguns Given blocks
+- **Solução:** Adicionar `const pedidoConsumidoresService = new PedidoConsumidoresService();`
+
+**Erro 4: "Cannot read properties of null (reading 'id')"**
+- **Causa:** Step "salvo as alterações" compartilhado entre PDC-04 e PDC-06
+- **Solução:** Step condicional que verifica contexto (produto ou status)
+
+**Erro 5: Duplicate step definitions**
+- **Causa:** Steps duplicadas em oferta_steps.js e pedidoconsumidores_steps.js
+- **Solução:** Remover duplicatas, manter apenas em oferta_steps.js
+
+#### 📊 Cenários Implementados
+
+| ID | Cenário | Steps | Status |
+|----|---------|-------|--------|
+| PDC-01 | Criar novo pedido | 6 | ✅ (já existia) |
+| PDC-02 | Ver detalhes do pedido | 4 | ✅ Implementado |
+| PDC-03 | Adicionar produto ao pedido | 6 | ✅ Implementado |
+| PDC-04 | Atualizar quantidade de produto | 7 | ✅ Implementado |
+| PDC-05 | Calcular valor total do pedido | 5 | ✅ Implementado |
+| PDC-06 | Atualizar status do pedido | 5 | ✅ Implementado |
+| PDC-07 | Listar pedidos do consumidor | 6 | ✅ Implementado |
+| PDC-08 | Listar pedidos do ciclo | 6 | ✅ Implementado |
+| PDC-09 | Buscar ou criar pedido | 5 | ✅ (já existia) |
+
+#### 📁 Arquivos Modificados
+
+| Arquivo | Alterações | Linhas |
+|---------|-----------|--------|
+| `services.js` | +8 métodos | +200 |
+| `pedidoconsumidores.js` | Correção de FKs | -20 |
+| `pedidoconsumidores.feature` | Removed @pending | -7 |
+| `pedidoconsumidores_steps.js` | +7 cenários | +300 |
+| `factories.js` | +1 factory | +15 |
+| `package.json` | Remove cucumber@6.0.7 | -1 |
+
+#### 🎯 Padrões Seguidos
+
+1. **Service Layer Pattern** - Sempre usar services, nunca Model.create() direto
+2. **Sequelize Best Practices** - FKs em migrations, não em init()
+3. **Test Isolation** - Before hooks para reset de estado
+4. **DRY** - Steps compartilhados entre features
+5. **Page Object Pattern** - Factories para dados de teste
+6. **Error Handling** - ServiceError com contexto
+
+#### ✅ Lições Aprendidas
+
+**1. FK Pattern no Sequelize:**
+- FKs devem estar APENAS em migrations
+- Model.init() define apenas campos de dados
+- Associations definem relacionamentos
+
+**2. Test Isolation:**
+- Variáveis globais precisam de reset entre testes
+- Before hooks com tags garantem isolamento
+
+**3. Padrão de Comparação:**
+- Sempre comparar com código existente (Oferta foi o guia)
+- Consistência é fundamental
+
+**4. Step Definitions:**
+- Steps condicionais são válidos quando reutilizados
+- Sempre instanciar services dentro dos steps
+
+#### 🚀 Como Executar
+
+```bash
+# Todos os testes BDD (incluindo PedidoConsumidores)
+npm test
+
+# Apenas testes de PedidoConsumidores
+npx @cucumber/cucumber features/pedidoconsumidores.feature
+
+# Com Rake
+rake testes:bdd
+rake testes:funcionalidade[pedidoconsumidores]
+```
+
+#### 📈 Estatísticas Finais
+
+- **Commits:** 0 (aguardando aprovação)
+- **Testes:** 9/9 (100%)
+- **Steps:** 47
+- **Código adicionado:** ~500 linhas
+- **Bugs corrigidos:** 5
+- **Padrões estabelecidos:** 1 (FK em migrations)
+
+#### 🎓 Insight Principal
+
+> "Antes estude a estrutura de oferta" - Comparar com código existente revelou o padrão correto de FKs no Sequelize, resolvendo o erro crítico.
+
+---
+
 ### 2025-11-22 | Fase 1 - Testes Unitários de Services (Frontend)
 
 **Objetivo:** Criar testes unitários para os novos services frontend criados nas refatorações anteriores.
