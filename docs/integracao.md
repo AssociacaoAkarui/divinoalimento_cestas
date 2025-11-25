@@ -112,7 +112,7 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 
 | # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
 |---|------------|------------|----------|---------|-------------|-------------|------------|------------|
-| 29 | `pedidoConsumidores.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ `PedidoConsumidoresProdutos`✅ | `PedidoConsumidoresService`✅ | `pedidoconsumidores.feature`🧪 | `common.css`✅ `pages/pedidoConsumidores.css`✅ | `api.service.js`✅ `pedidoConsumidores.service.js`✅ | ❌ |
+| 29 | `pedidoConsumidores.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ `PedidoConsumidoresProdutos`✅ | `PedidoConsumidoresService`✅ | `pedidoconsumidores.feature`🧪 (9/9 cenários) | `common.css`✅ `pages/pedidoConsumidores.css`✅ | `api.service.js`✅ `pedidoConsumidores.service.js`✅ | `pedidoConsumidores.service.test.js`✅🧪 |
 | 30 | `pedidoConsumidoresConfirmacao.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ | ❌ | `pedidoconsumidores.feature`🧪 | ❌ | ❌ | ❌ |
 | 31 | `pedidosConsumidoresTodos.ejs` | `PedidoConsumidoresController`✅ | `PedidoConsumidores`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | 32 | `pedidosConsumidoresCiclos.ejs` | `RelatorioController`✅ | `PedidoConsumidores`✅ `Ciclo`✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -207,7 +207,7 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 ### Services Backend Implementados (2)
 
 1. ✅ `OfertaService` - Operações AJAX de ofertas
-2. ✅ `PedidoConsumidoresService` - Gestão de pedidos
+2. ✅ `PedidoConsumidoresService` - Gestão completa de pedidos (10 métodos implementados)
 
 ### Frontend Modularizado (2 telas)
 
@@ -390,7 +390,42 @@ Para cada tela a ser modernizada, seguir:
 - 📊 Cobertura de services: 3/3 (api, oferta, pedidoConsumidores)
 - ⚠️ Testes de UI agora são **manuais**
 
+### 2025-11-25 - Implementação Completa dos Testes BDD de PedidoConsumidores
+- ✅ **Resultado: 9/9 cenários passando (100%), 47 steps executados**
+- ✅ **8 novos métodos no PedidoConsumidoresService**:
+  - `buscarPedidoPorId()` - Busca pedido com includes completos
+  - `adicionarProdutoAoPedido()` - Adiciona/atualiza produto
+  - `atualizarQuantidadeProduto()` - Atualiza quantidade específica
+  - `calcularValorTotalPedido()` - Calcula total do pedido
+  - `atualizarStatusPedido()` - Atualiza status
+  - `listarProdutosDoPedido()` - Lista produtos com detalhes
+  - `listarPedidosDoConsumidor()` - Lista pedidos do consumidor
+  - `listarPedidosDoCiclo()` - Lista pedidos do ciclo
+- ✅ **Correção crítica no model PedidoConsumidores**:
+  - Removidos `cicloId` e `usuarioId` de `init()`
+  - FKs mantidos apenas em migrations (padrão Oferta)
+  - Corrige erro "FOREIGN KEY constraint failed"
+- ✅ **Implementados 7 cenários BDD** (PDC-02 a PDC-08):
+  - PDC-02: Ver detalhes do pedido
+  - PDC-03: Adicionar produto ao pedido
+  - PDC-04: Atualizar quantidade de produto
+  - PDC-05: Calcular valor total do pedido
+  - PDC-06: Atualizar status do pedido
+  - PDC-07: Listar pedidos do consumidor
+  - PDC-08: Listar pedidos do ciclo
+- ✅ **Melhorias nos testes**:
+  - Adicionado Before hook para reset de variáveis globais
+  - Criada `PedidoConsumidoresProdutosFactory` com Faker
+  - Uso consistente de services (não Model.create())
+  - Step condicional para "salvo as alterações"
+- ✅ **Limpeza de dependências**:
+  - Removida `cucumber@6.0.7` do package.json
+- 📊 **Arquivos modificados**: 6 arquivos (+745 linhas, -107 linhas)
+- 🐛 **Bugs corrigidos**: 5 erros documentados com soluções
+- 📝 **Documentação**: Histórico completo adicionado ao agent.md
+- 🎓 **Insight principal**: Comparação com modelo Oferta revelou padrão correto de FKs
+
 ---
 
-**Última atualização**: 2025-11-22
+**Última atualização**: 2025-11-25
 **Documento gerado por**: Claude Code Agent
