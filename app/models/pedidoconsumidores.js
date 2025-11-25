@@ -1,7 +1,5 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
+"use strict";
+const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class PedidoConsumidores extends Model {
     /**
@@ -11,18 +9,31 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       PedidoConsumidores.hasMany(models.PedidoConsumidoresProdutos, {
-        foreignKey: 'pedidoConsumidorId',
-        as: 'pedidoConsumidoresProdutos',
-        onDelete: 'CASCADE'
+        foreignKey: "pedidoConsumidorId",
+        as: "pedidoConsumidoresProdutos",
+        onDelete: "CASCADE",
+      });
+
+      PedidoConsumidores.belongsTo(models.Usuario, {
+        foreignKey: "usuarioId",
+        as: "Usuario",
+      });
+
+      PedidoConsumidores.belongsTo(models.Ciclo, {
+        foreignKey: "cicloId",
+        as: "Ciclo",
       });
     }
-  };
-  PedidoConsumidores.init({
-    status: DataTypes.STRING,
-    observacao: DataTypes.STRING
-  }, {
-    sequelize,
-    modelName: 'PedidoConsumidores',
-  });
+  }
+  PedidoConsumidores.init(
+    {
+      status: DataTypes.STRING,
+      observacao: DataTypes.STRING,
+    },
+    {
+      sequelize,
+      modelName: "PedidoConsumidores",
+    },
+  );
   return PedidoConsumidores;
 };

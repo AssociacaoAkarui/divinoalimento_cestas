@@ -900,6 +900,313 @@ class PedidoConsumidoresService {
       });
     }
   }
+
+  async buscarPedidoPorId(pedidoId, options = {}) {
+    try {
+      const {
+        PedidoConsumidores,
+        Usuario,
+        Ciclo,
+        PedidoConsumidoresProdutos,
+        Produto,
+      } = require("../../models");
+
+      const includeAssociations = options.includeAssociations !== false;
+
+      const pedido = await PedidoConsumidores.findByPk(pedidoId, {
+        include: includeAssociations
+          ? [
+              {
+                model: Usuario,
+                as: "Usuario",
+                attributes: ["id", "nome", "email"],
+              },
+              {
+                model: Ciclo,
+                as: "Ciclo",
+                attributes: ["id", "nome", "status"],
+              },
+              {
+                model: PedidoConsumidoresProdutos,
+                as: "pedidoConsumidoresProdutos",
+                include: [
+                  {
+                    model: Produto,
+                    as: "produto",
+                    attributes: ["id", "nome", "medida"],
+                  },
+                ],
+              },
+            ]
+          : [],
+      });
+
+      if (!pedido) {
+        throw new ServiceError(`Pedido com ID ${pedidoId} não encontrado`);
+      }
+
+      return pedido;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao buscar pedido de consumidor.", {
+        cause: error,
+      });
+    }
+  }
+
+  async adicionarProdutoAoPedido(
+    pedidoId,
+    produtoId,
+    quantidade,
+    valorOferta = null,
+    valorCompra = null,
+  ) {
+    try {
+      const {
+        PedidoConsumidores,
+        Produto,
+        PedidoConsumidoresProdutos,
+      } = require("../../models");
+
+      // Validar pedido existe
+      const pedido = await PedidoConsumidores.findByPk(pedidoId);
+      if (!pedido) {
+        throw new ServiceError(`Pedido com ID ${pedidoId} não encontrado`);
+      }
+
+      // Validar produto existe
+      const produto = await Produto.findByPk(produtoId);
+      if (!produto) {
+        throw new ServiceError(`Produto com ID ${produtoId} não encontrado`);
+      }
+
+      // Validar quantidade
+      if (!quantidade || quantidade <= 0) {
+        throw new ServiceError("Quantidade deve ser maior que zero");
+      }
+
+      // Criar ou atualizar produto no pedido
+      const [pedidoProduto, created] =
+        await PedidoConsumidoresProdutos.findOrCreate({
+          where: {
+            pedidoConsumidorId: pedidoId,
+            produtoId: produtoId,
+          },
+          defaults: {
+            quantidade: quantidade,
+            valorOferta: valorOferta,
+            valorCompra: valorCompra,
+          },
+        });
+
+      if (!created) {
+        // Se já existia, atualizar a quantidade
+        pedidoProduto.quantidade = quantidade;
+        if (valorOferta !== null) pedidoProduto.valorOferta = valorOferta;
+        if (valorCompra !== null) pedidoProduto.valorCompra = valorCompra;
+        await pedidoProduto.save();
+      }
+
+      return pedidoProduto;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao adicionar produto ao pedido.", {
+        cause: error,
+      });
+    }
+  }
+
+  async atualizarQuantidadeProduto(pedidoId, produtoId, novaQuantidade) {
+    try {
+      const { PedidoConsumidoresProdutos } = require("../../models");
+
+      if (!novaQuantidade || novaQuantidade < 0) {
+        throw new ServiceError("Quantidade deve ser maior ou igual a zero");
+      }
+
+      const pedidoProduto = await PedidoConsumidoresProdutos.findOne({
+        where: {
+          pedidoConsumidorId: pedidoId,
+          produtoId: produtoId,
+        },
+      });
+
+      if (!pedidoProduto) {
+        throw new ServiceError(
+          `Produto ${produtoId} não encontrado no pedido ${pedidoId}`,
+        );
+      }
+
+      if (novaQuantidade === 0) {
+        // Se quantidade é zero, remover o produto
+        await pedidoProduto.destroy();
+        return null;
+      }
+
+      pedidoProduto.quantidade = novaQuantidade;
+      await pedidoProduto.save();
+
+      return pedidoProduto;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao atualizar quantidade do produto.", {
+        cause: error,
+      });
+    }
+  }
+
+  async calcularValorTotalPedido(pedidoId) {
+    try {
+      const { PedidoConsumidoresProdutos } = require("../../models");
+
+      const produtos = await PedidoConsumidoresProdutos.findAll({
+        where: {
+          pedidoConsumidorId: pedidoId,
+        },
+      });
+
+      let total = 0;
+      for (const item of produtos) {
+        const valor = item.valorCompra || item.valorOferta || 0;
+        total += valor * item.quantidade;
+      }
+
+      return parseFloat(total.toFixed(2));
+    } catch (error) {
+      throw new ServiceError("Falha ao calcular valor total do pedido.", {
+        cause: error,
+      });
+    }
+  }
+
+  async atualizarStatusPedido(pedidoId, novoStatus) {
+    try {
+      const { PedidoConsumidores } = require("../../models");
+
+      const pedido = await PedidoConsumidores.findByPk(pedidoId);
+      if (!pedido) {
+        throw new ServiceError(`Pedido com ID ${pedidoId} não encontrado`);
+      }
+
+      pedido.status = novoStatus;
+      await pedido.save();
+
+      return pedido;
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      throw new ServiceError("Falha ao atualizar status do pedido.", {
+        cause: error,
+      });
+    }
+  }
+
+  async listarProdutosDoPedido(pedidoId) {
+    try {
+      const { PedidoConsumidoresProdutos, Produto } = require("../../models");
+
+      const produtos = await PedidoConsumidoresProdutos.findAll({
+        where: {
+          pedidoConsumidorId: pedidoId,
+        },
+        include: [
+          {
+            model: Produto,
+            as: "produto",
+            attributes: ["id", "nome", "medida"],
+          },
+        ],
+      });
+
+      return produtos;
+    } catch (error) {
+      throw new ServiceError("Falha ao listar produtos do pedido.", {
+        cause: error,
+      });
+    }
+  }
+
+  async listarPedidosDoConsumidor(usuarioId, cicloId = null) {
+    try {
+      const {
+        PedidoConsumidores,
+        Ciclo,
+        PedidoConsumidoresProdutos,
+        Produto,
+      } = require("../../models");
+
+      const where = { usuarioId };
+      if (cicloId) {
+        where.cicloId = cicloId;
+      }
+
+      const pedidos = await PedidoConsumidores.findAll({
+        where,
+        include: [
+          {
+            model: Ciclo,
+            as: "Ciclo",
+            attributes: ["id", "nome", "status"],
+          },
+          {
+            model: PedidoConsumidoresProdutos,
+            as: "pedidoConsumidoresProdutos",
+            include: [
+              {
+                model: Produto,
+                as: "produto",
+                attributes: ["id", "nome", "medida"],
+              },
+            ],
+          },
+        ],
+      });
+
+      return pedidos;
+    } catch (error) {
+      throw new ServiceError("Falha ao listar pedidos do consumidor.", {
+        cause: error,
+      });
+    }
+  }
+
+  async listarPedidosDoCiclo(cicloId) {
+    try {
+      const {
+        PedidoConsumidores,
+        Usuario,
+        PedidoConsumidoresProdutos,
+        Produto,
+      } = require("../../models");
+
+      const pedidos = await PedidoConsumidores.findAll({
+        where: { cicloId },
+        include: [
+          {
+            model: Usuario,
+            as: "Usuario",
+            attributes: ["id", "nome", "email"],
+          },
+          {
+            model: PedidoConsumidoresProdutos,
+            as: "pedidoConsumidoresProdutos",
+            include: [
+              {
+                model: Produto,
+                as: "produto",
+                attributes: ["id", "nome", "medida"],
+              },
+            ],
+          },
+        ],
+      });
+
+      return pedidos;
+    } catch (error) {
+      throw new ServiceError("Falha ao listar pedidos do ciclo.", {
+        cause: error,
+      });
+    }
+  }
 }
 
 module.exports = {

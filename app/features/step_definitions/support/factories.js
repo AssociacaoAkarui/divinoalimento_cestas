@@ -90,6 +90,19 @@ class PedidoConsumidoresFactory {
   }
 }
 
+class PedidoConsumidoresProdutosFactory {
+  static create(override = {}) {
+    return {
+      pedidoConsumidorId: null,
+      produtoId: null,
+      quantidade: faker.number.int({ min: 1, max: 10 }),
+      valorOferta: parseFloat(faker.commerce.price()),
+      valorCompra: parseFloat(faker.commerce.price()),
+      ...override,
+    };
+  }
+}
+
 module.exports = {
   CestaFactory,
   PontoEntregaFactory,
@@ -97,4 +110,5 @@ module.exports = {
   ProdutoFactory,
   UsuarioFactory,
   PedidoConsumidoresFactory,
+  PedidoConsumidoresProdutosFactory,
 };
