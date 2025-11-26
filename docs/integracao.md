@@ -45,7 +45,7 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 
 | # | View (EJS) | Controller | Model DB | Service | Feature BDD | CSS Modular | JS Service | Tests Unit |
 |---|------------|------------|----------|---------|-------------|-------------|------------|------------|
-| 1 | `index.ejs` | `IndexController` | `Usuario`✅ | ❌ | ❌ | ❌ | ❌ |
+| 1 | `index.ejs` | `IndexController`✅ | `Usuario`✅ `Ciclo`✅ `PedidoConsumidores`✅ | ❌ | `index.feature`🧪 (10 cenários) | `common.css`✅ `pages/index.css`✅ | N/A | N/A |
 | 2 | `usuario.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ |
 | 3 | `usuario-index.ejs` | `UsuarioIndexController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ |
 | 4 | `usuario-edit.ejs` | `UsuarioController`✅ | `Usuario`✅ | ❌ | `usuario.feature`🧪 | ❌ | ❌ |
@@ -190,29 +190,31 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 19. ✅ `Movimentacao`
 20. ✅ `TipoMovimentacao`
 
-### Features BDD Disponíveis (11)
+### Features BDD Disponíveis (12)
 
-1. 🧪 `usuario.feature`
-2. 🧪 `ciclo.feature`
-3. 🧪 `cesta.feature`
-4. 🧪 `produto.feature`
-5. 🧪 `categoriaprodutos.feature`
-6. 🧪 `pontoentrega.feature`
-7. 🧪 `oferta.feature`
-8. 🧪 `oferta-ui.feature` (E2E)
+1. 🧪 `index.feature` - **10 cenários** (Página inicial, filtragem de ciclos, perfis)
+2. 🧪 `usuario.feature`
+3. 🧪 `ciclo.feature`
+4. 🧪 `cesta.feature`
+5. 🧪 `produto.feature`
+6. 🧪 `categoriaprodutos.feature`
+7. 🧪 `pontoentrega.feature`
+8. 🧪 `oferta.feature`
 9. 🧪 `composicao.feature`
-10. 🧪 `pedidoconsumidores.feature`
+10. 🧪 `pedidoconsumidores.feature` - **9 cenários**
 11. 🧪 `relatorios.feature`
+12. 🧪 ~~`oferta-ui.feature`~~ (E2E removido - Mac ARM)
 
 ### Services Backend Implementados (2)
 
 1. ✅ `OfertaService` - Operações AJAX de ofertas
 2. ✅ `PedidoConsumidoresService` - Gestão completa de pedidos (10 métodos implementados)
 
-### Frontend Modularizado (2 telas)
+### Frontend Modularizado (3 telas)
 
 | Tela | CSS Comum | CSS Específico | JS Service | JS Utils |
 |------|-----------|----------------|------------|----------|
+| **Index** | `common.css`✅ | `pages/index.css`✅ | N/A | N/A |
 | **Oferta** | `common.css`✅ | `pages/oferta.css`✅ | `oferta.service.js`✅ | `feedback.js`✅ |
 | **PedidoConsumidores** | `common.css`✅ | `pages/pedidoConsumidores.css`✅ | `pedidoConsumidores.service.js`✅ | `feedback.js`✅ |
 
@@ -225,6 +227,7 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 /public/css/
 ├── common.css                    # Design system global (348 linhas)
 └── pages/
+    ├── index.css                 # ✅ Implementado (~630 linhas) - NOVO
     ├── oferta.css                # ✅ Implementado (361 linhas)
     ├── pedidoConsumidores.css    # ✅ Implementado (~350 linhas)
     ├── composicao.css            # ❌ Pendente
@@ -275,11 +278,11 @@ Este projeto utiliza uma arquitetura **MVC tradicional com EJS**:
 
 | # | Tela | Impacto | Complexidade | Status |
 |---|------|---------|--------------|--------|
-| 1 | `oferta.ejs` | Alto | Média | ✅ Completo |
-| 2 | `pedidoConsumidores.ejs` | Alto | Alta | ✅ Completo |
-| 3 | `composicao.ejs` | Alto | Alta | ❌ Pendente |
-| 4 | `ciclo.ejs` | Médio | Média | ❌ Pendente |
-| 5 | `index.ejs` | Alto | Média | ❌ Pendente |
+| 1 | `index.ejs` | Alto | Média | ✅ Completo |
+| 2 | `oferta.ejs` | Alto | Média | ✅ Completo |
+| 3 | `pedidoConsumidores.ejs` | Alto | Alta | ✅ Completo |
+| 4 | `composicao.ejs` | Alto | Alta | ❌ Pendente |
+| 5 | `ciclo.ejs` | Médio | Média | ❌ Pendente |
 
 ### Média Prioridade - Telas de Cadastro
 
@@ -324,7 +327,7 @@ Para cada tela a ser modernizada, seguir:
 
 | Métrica | Atual | Meta | % |
 |---------|-------|------|---|
-| Views com CSS modular | 2 | 44 | 5% |
+| Views com CSS modular | 3 | 44 | 7% |
 | Views com JS modular | 2 | 15* | 13% |
 | Testes unitários JS | 58 | 100 | 58% |
 | Testes E2E | 0 | Manual | N/A |
@@ -425,7 +428,61 @@ Para cada tela a ser modernizada, seguir:
 - 📝 **Documentação**: Histórico completo adicionado ao agent.md
 - 🎓 **Insight principal**: Comparação com modelo Oferta revelou padrão correto de FKs
 
+### 2025-11-26 - Modernização da Tela Index (Página Inicial) com Acessibilidade Alta
+- ✅ **Página inicial modernizada com foco em acessibilidade para usuários mais velhos e inexperientes**
+- ✅ **Criado `app/public/css/pages/index.css`** (~630 linhas):
+  - Section headers com gradientes
+  - Cycle info cards (informações do ciclo)
+  - Action cards com 5 estados (active/inactive/admin/personal)
+  - Touch targets grandes (44px+ WCAG AA)
+  - Ícones 80x80px (48px internos)
+  - Badges de status visíveis ("DISPONÍVEL"/"INDISPONÍVEL")
+  - 4 breakpoints responsivos (desktop, tablet, mobile, muito pequeno)
+  - Suporte a `prefers-contrast: high`
+  - Suporte a `prefers-reduced-motion: reduce`
+  - Print styles otimizados
+- ✅ **Refatorado `app/src/views/index.ejs`** (~550 linhas):
+  - HTML semântico (`<section>`, `<article>`, `<time>`)
+  - ARIA labels completos em todos os cards
+  - `role="list"` e `role="listitem"` para navegação
+  - `aria-labelledby` para associar seções
+  - `.sr-only` para leitores de tela
+  - Estado vazio (quando não há ciclos)
+  - Cards inteiros clicáveis (touch target grande)
+  - Backup criado: `index.ejs.bak`
+- ✅ **5 tipos de cards por ciclo**:
+  1. Oferta de Produtos (Fornecedor)
+  2. Composição das Cestas (Admin)
+  3. Pedidos Extras (Consumidor)
+  4. Lista para Entrega (Fornecedor)
+  5. Relatório de Entrega (Consumidor)
+- ✅ **Seção Pessoal** (1 card): Dados Pessoais
+- ✅ **Seção Admin** (4 cards): Ciclos, Relatório Fornecedores, Relatório Consumidores, Cadastros
+- 🎯 **Características de acessibilidade implementadas**:
+  - Textos grandes (títulos 1.375rem, datas 1.125rem)
+  - Alto contraste (verde vibrante para ativo, cinza para inativo)
+  - Barra superior colorida (6px) em cada card
+  - Badges sempre visíveis no topo direito
+  - Focus por teclado (outline 4px laranja)
+  - Fonte monospace para datas (legibilidade de números)
+  - Grid responsivo `auto-fill minmax(300px, 1fr)`
+  - Opacidade reduzida em cards inativos (0.7)
+  - Cursor `not-allowed` em cards inativos
+- 📊 **Estatísticas**:
+  - 630 linhas CSS criadas
+  - 550 linhas HTML refatoradas
+  - 3 telas modernizadas (index, oferta, pedidoConsumidores)
+  - Progresso: 7% (3/44 views com CSS modular)
+- ♿ **WCAG AA alcançado**:
+  - Contraste mínimo 4.5:1
+  - Touch targets 44px+
+  - HTML semântico com landmarks
+  - Navegação por teclado completa
+  - Suporte a leitores de tela
+  - Preferências do sistema respeitadas
+- 🎓 **Lição principal**: Visual design é 80% da acessibilidade - estados óbvios reduzem carga cognitiva
+
 ---
 
-**Última atualização**: 2025-11-25
+**Última atualização**: 2025-11-26
 **Documento gerado por**: Claude Code Agent
