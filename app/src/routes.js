@@ -120,6 +120,13 @@ routes.get(
   OfertaController.obterProdutosOferta,
 );
 
+// INDEX API
+routes.get("/api/index/ciclos-ativos", IndexController.buscarCiclosAtivos);
+routes.post(
+  "/api/index/calcular-status-etapa",
+  IndexController.calcularStatusEtapa,
+);
+
 //routes.get('/composicao/:id', ComposicaoController.showCreateEdit)
 //routes.post('/composicao', ComposicaoController.savePartial)
 //routes.post('/composicaosave', ComposicaoController.save)

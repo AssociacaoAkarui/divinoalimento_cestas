@@ -51,6 +51,7 @@ class CicloService {
         "retiradaConsumidorInicio",
         "retiradaConsumidorFim",
         "observacao",
+        "status",
       ];
       const payloadSeguro = filterPayload(
         Ciclo,
@@ -1209,6 +1210,145 @@ class PedidoConsumidoresService {
   }
 }
 
+class IndexService {
+  /**
+   * Busca ciclos ativos com dados completos para exibição no index
+   * @param {number} usuarioId - ID do usuário logado
+   * @returns {Promise<Array>} Ciclos ativos com status calculados
+   */
+  async buscarCiclosAtivos(usuarioId = null) {
+    try {
+      const data = await CicloModel.getCiclosMin();
+      const ciclos = data.ciclos;
+      const ciclosAtivos = [];
+
+      for (const ciclo of ciclos) {
+        // Verificar se ciclo está ativo
+        const dataRetiradaConsumidorFim = new Date(ciclo.retiradaConsumidorFim);
+        let dataCorte = new Date(dataRetiradaConsumidorFim);
+        dataCorte.setDate(dataRetiradaConsumidorFim.getDate() + 1);
+        const dataAtual = Date.now();
+
+        if (dataAtual <= dataCorte) {
+          // Verificar se usuário finalizou pedido
+          let pedidoConsumidorFinalizado = false;
+          if (usuarioId) {
+            const PedidoConsumidoresModel = require("../model/PedidoConsumidores");
+            pedidoConsumidorFinalizado =
+              await PedidoConsumidoresModel.pedidoConsumidorFinalizado(
+                ciclo.id,
+                usuarioId,
+              );
+          }
+
+          ciclosAtivos.unshift({
+            ...ciclo,
+            pedidoConsumidorFinalizado,
+          });
+        }
+      }
+
+      return ciclosAtivos;
+    } catch (error) {
+      throw new ServiceError("Falha ao buscar ciclos ativos.", {
+        cause: error,
+      });
+    }
+  }
+
+  /**
+   * Calcula status de disponibilidade de uma etapa do ciclo
+   * @param {Object} ciclo - Dados do ciclo
+   * @param {string} perfil - Perfil do usuário (admin, fornecedor, consumidor)
+   * @param {string} etapa - Nome da etapa (oferta, composicao, pedidos, entrega, retirada)
+   * @returns {Object} { ativo: boolean, status: string, metadata: Object }
+   */
+  calcularStatusEtapa(ciclo, perfil, etapa) {
+    const dataAtual = Date.now() - 10800000; // Ajuste de timezone
+
+    switch (etapa) {
+      case "oferta":
+        if (!perfil || perfil.indexOf("fornecedor") < 0) {
+          return { ativo: false, status: "INDISPONÍVEL" };
+        }
+
+        const ofertaInicio = Date.parse(ciclo.ofertaInicio);
+        const ofertaFim = Date.parse(ciclo.ofertaFim);
+        const ativo = dataAtual >= ofertaInicio && ofertaFim >= dataAtual;
+
+        return { ativo, status: ativo ? "DISPONÍVEL" : "INDISPONÍVEL" };
+
+      case "composicao":
+        if (!perfil || perfil.indexOf("admin") < 0) {
+          return { ativo: false, status: "INDISPONÍVEL" };
+        }
+
+        const composicaoInicio = Date.parse(ciclo.ofertaInicio);
+        const composicaoFim = Date.parse(ciclo.itensAdicionaisInicio);
+        const composicaoAtivo =
+          dataAtual > composicaoInicio && composicaoFim > dataAtual;
+
+        return {
+          ativo: composicaoAtivo,
+          status: composicaoAtivo ? "DISPONÍVEL" : "INDISPONÍVEL",
+        };
+
+      case "pedidos":
+        if (!perfil || perfil.indexOf("consumidor") < 0) {
+          return { ativo: false, status: "INDISPONÍVEL" };
+        }
+
+        let itensAdicionaisAtivo = 0;
+        if (ciclo.status === "composicao") itensAdicionaisAtivo = 1;
+        if (ciclo.pedidoConsumidorFinalizado) itensAdicionaisAtivo = 2;
+        if (ciclo.status === "finalizado") itensAdicionaisAtivo = 3;
+        if (ciclo.status === "atribuicao") itensAdicionaisAtivo = 4;
+
+        const pedidosAtivo =
+          itensAdicionaisAtivo > 0 && itensAdicionaisAtivo < 3;
+
+        return {
+          ativo: pedidosAtivo,
+          status: pedidosAtivo ? "DISPONÍVEL" : "INDISPONÍVEL",
+          metadata: { itensAdicionaisAtivo },
+        };
+
+      case "entrega":
+        if (!perfil || perfil.indexOf("fornecedor") < 0) {
+          return { ativo: false, status: "INDISPONÍVEL" };
+        }
+
+        const entregaAtivo = ciclo.status === "atribuicao";
+
+        return {
+          ativo: entregaAtivo,
+          status: entregaAtivo ? "DISPONÍVEL" : "INDISPONÍVEL",
+        };
+
+      case "retirada":
+        if (!perfil || perfil.indexOf("consumidor") < 0) {
+          return { ativo: false, status: "INDISPONÍVEL" };
+        }
+
+        // Usa a mesma lógica de pedidos
+        const statusPedidos = this.calcularStatusEtapa(
+          ciclo,
+          perfil,
+          "pedidos",
+        );
+        const retiradaAtivo = statusPedidos.metadata?.itensAdicionaisAtivo > 0;
+
+        return {
+          ativo: retiradaAtivo,
+          status: retiradaAtivo ? "DISPONÍVEL" : "INDISPONÍVEL",
+        };
+
+      default:
+        return { ativo: false, status: "INDISPONÍVEL" };
+    }
+  }
+}
+
 module.exports = {
   CicloService,
   ProdutoService,
@@ -1217,4 +1357,5 @@ module.exports = {
   PontoEntregaService,
   OfertaService,
   PedidoConsumidoresService,
+  IndexService,
 };
