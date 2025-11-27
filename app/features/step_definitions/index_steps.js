@@ -137,8 +137,12 @@ Given("que existe um ciclo ativo no status {string}", async function (status) {
   });
 
   const ciclo = await cicloService.criarCiclo(cicloData);
-  this.ciclos.push(ciclo);
-  this.cicloAtivo = ciclo;
+
+  // Recarregar do banco para garantir que tem todos os campos (incluindo status)
+  const cicloCompleto = await Ciclo.findByPk(ciclo.id);
+
+  this.ciclos.push(cicloCompleto);
+  this.cicloAtivo = cicloCompleto;
 });
 
 // Step "que existe um ciclo ativo" já existe em composicao_steps.js
@@ -507,4 +511,175 @@ Then("o link deve apontar para {string}", function (url) {
       "Deveria redirecionar para confirmação quando pedido está finalizado",
     );
   }
+});
+
+// ============================================
+// STEPS PARA TESTAR IndexService
+// ============================================
+
+const { IndexService } = require("../../src/services/services");
+
+// Variáveis para testes do IndexService
+let indexService;
+let ciclosAtivosRetornados;
+let statusCalculado;
+
+Before({ tags: "@index" }, function () {
+  indexService = null;
+  ciclosAtivosRetornados = null;
+  statusCalculado = null;
+});
+
+// Buscar ciclos ativos com IndexService
+When("eu solicito os ciclos ativos", async function () {
+  indexService = new IndexService();
+  ciclosAtivosRetornados = await indexService.buscarCiclosAtivos();
+});
+
+When("eu solicito os ciclos ativos para o consumidor", async function () {
+  indexService = new IndexService();
+  ciclosAtivosRetornados = await indexService.buscarCiclosAtivos(
+    this.usuario.id,
+  );
+});
+
+When("eu solicito os ciclos ativos sem informar usuário", async function () {
+  indexService = new IndexService();
+  ciclosAtivosRetornados = await indexService.buscarCiclosAtivos(null);
+});
+
+Then("eu devo receber {int} ciclos na resposta", function (quantidade) {
+  expect(ciclosAtivosRetornados).to.be.an("array");
+  expect(ciclosAtivosRetornados).to.have.lengthOf(quantidade);
+});
+
+Then("eu devo receber uma lista vazia", function () {
+  expect(ciclosAtivosRetornados).to.be.an("array");
+  expect(ciclosAtivosRetornados).to.have.lengthOf(0);
+});
+
+Then("o ciclo deve indicar que o pedido foi finalizado", function () {
+  expect(ciclosAtivosRetornados).to.be.an("array");
+  expect(ciclosAtivosRetornados.length).to.be.greaterThan(0);
+
+  const ciclo = ciclosAtivosRetornados[0];
+  expect(ciclo).to.have.property("pedidoConsumidorFinalizado");
+  expect(ciclo.pedidoConsumidorFinalizado).to.equal(true);
+});
+
+Then(
+  "eu devo receber o ciclo sem informação de pedido finalizado",
+  function () {
+    expect(ciclosAtivosRetornados).to.be.an("array");
+    expect(ciclosAtivosRetornados.length).to.be.greaterThan(0);
+
+    const ciclo = ciclosAtivosRetornados[0];
+    expect(ciclo).to.have.property("pedidoConsumidorFinalizado");
+    expect(ciclo.pedidoConsumidorFinalizado).to.equal(false);
+  },
+);
+
+// Calcular status de etapas
+When(
+  "eu calculo o status da etapa {string} para o fornecedor",
+  function (etapa) {
+    indexService = new IndexService();
+    const ciclo = this.cicloAtivo;
+    const perfil = this.usuario.perfil;
+    statusCalculado = indexService.calcularStatusEtapa(ciclo, perfil, etapa);
+  },
+);
+
+When("eu calculo o status da etapa {string} para o admin", function (etapa) {
+  indexService = new IndexService();
+  const ciclo = this.cicloAtivo;
+  const perfil = this.usuario.perfil;
+  statusCalculado = indexService.calcularStatusEtapa(ciclo, perfil, etapa);
+});
+
+When(
+  "eu calculo o status da etapa {string} para o consumidor",
+  function (etapa) {
+    indexService = new IndexService();
+    const ciclo = this.cicloAtivo;
+    const perfil = this.usuario.perfil;
+    statusCalculado = indexService.calcularStatusEtapa(ciclo, perfil, etapa);
+  },
+);
+
+When(
+  "eu calculo o status da etapa {string} sem informar perfil",
+  function (etapa) {
+    indexService = new IndexService();
+    const ciclo = this.cicloAtivo;
+    statusCalculado = indexService.calcularStatusEtapa(ciclo, null, etapa);
+  },
+);
+
+Then("o status deve ser {string}", function (status) {
+  expect(statusCalculado).to.be.an("object");
+  expect(statusCalculado).to.have.property("ativo");
+
+  const ativo = status === "ativo";
+  expect(statusCalculado.ativo).to.equal(ativo);
+});
+
+Then("a mensagem deve ser {string}", function (mensagem) {
+  expect(statusCalculado).to.be.an("object");
+  expect(statusCalculado).to.have.property("status");
+  expect(statusCalculado.status).to.equal(mensagem);
+});
+
+// Steps auxiliares para configurar períodos
+Given("que o período de oferta está aberto", async function () {
+  const hoje = new Date();
+  const ontem = new Date(hoje);
+  ontem.setDate(hoje.getDate() - 1);
+  const amanha = new Date(hoje);
+  amanha.setDate(hoje.getDate() + 1);
+
+  await Ciclo.update(
+    {
+      ofertaInicio: ontem,
+      ofertaFim: amanha,
+    },
+    { where: { id: this.cicloAtivo.id } },
+  );
+
+  this.cicloAtivo = await Ciclo.findByPk(this.cicloAtivo.id);
+});
+
+Given("que o período de oferta está fechado", async function () {
+  const semanaPassada = new Date();
+  semanaPassada.setDate(semanaPassada.getDate() - 7);
+  const ontem = new Date();
+  ontem.setDate(ontem.getDate() - 1);
+
+  await Ciclo.update(
+    {
+      ofertaInicio: semanaPassada,
+      ofertaFim: ontem,
+    },
+    { where: { id: this.cicloAtivo.id } },
+  );
+
+  this.cicloAtivo = await Ciclo.findByPk(this.cicloAtivo.id);
+});
+
+Given("que o período de composição está aberto", async function () {
+  const hoje = new Date();
+  const ontem = new Date(hoje);
+  ontem.setDate(hoje.getDate() - 1);
+  const amanha = new Date(hoje);
+  amanha.setDate(hoje.getDate() + 2);
+
+  await Ciclo.update(
+    {
+      ofertaInicio: ontem,
+      itensAdicionaisInicio: amanha,
+    },
+    { where: { id: this.cicloAtivo.id } },
+  );
+
+  this.cicloAtivo = await Ciclo.findByPk(this.cicloAtivo.id);
 });

@@ -104,3 +104,123 @@ Funcionalidade: Página Inicial (Index)
     Quando acesso a página inicial
     Então devo ver a funcionalidade "Pedidos Extras" apontando para confirmação
     E o link deve apontar para "/pedidoConsumidoresconfirmacao"
+
+  # ============================================
+  # CENÁRIOS PARA TESTAR IndexService
+  # ============================================
+
+  @index @index-service
+  Cenário: IDX-11 - IndexService buscar ciclos ativos com sucesso
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existem 2 ciclos cadastrados
+    E que o primeiro ciclo está ativo
+    E que o segundo ciclo está expirado
+    Quando eu solicito os ciclos ativos
+    Então eu devo receber 1 ciclos na resposta
+
+  @index @index-service
+  Cenário: IDX-12 - IndexService buscar ciclos para consumidor com pedido finalizado
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo
+    E que estou autenticado como consumidor
+    E que já finalizei meu pedido de consumidor
+    Quando eu solicito os ciclos ativos para o consumidor
+    Então o ciclo deve indicar que o pedido foi finalizado
+
+  @index @index-service
+  Cenário: IDX-13 - IndexService buscar ciclos sem usuário
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo
+    Quando eu solicito os ciclos ativos sem informar usuário
+    Então eu devo receber o ciclo sem informação de pedido finalizado
+
+  @index @index-service
+  Cenário: IDX-14 - IndexService calcular status de oferta disponível
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo
+    E que o período de oferta está aberto
+    E que estou autenticado como fornecedor
+    Quando eu calculo o status da etapa "oferta" para o fornecedor
+    Então o status deve ser "ativo"
+    E a mensagem deve ser "DISPONÍVEL"
+
+  @index @index-service
+  Cenário: IDX-15 - IndexService calcular status de oferta indisponível
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo
+    E que o período de oferta está fechado
+    E que estou autenticado como fornecedor
+    Quando eu calculo o status da etapa "oferta" para o fornecedor
+    Então o status deve ser "inativo"
+    E a mensagem deve ser "INDISPONÍVEL"
+
+  @index @index-service
+  Cenário: IDX-16 - IndexService calcular status de composição para admin
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo
+    E que o período de composição está aberto
+    E que estou autenticado como admin
+    Quando eu calculo o status da etapa "composicao" para o admin
+    Então o status deve ser "ativo"
+    E a mensagem deve ser "DISPONÍVEL"
+
+  @index @index-service
+  Cenário: IDX-17 - IndexService composição indisponível para fornecedor
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo
+    E que o período de composição está aberto
+    E que estou autenticado como fornecedor
+    Quando eu calculo o status da etapa "composicao" para o fornecedor
+    Então o status deve ser "inativo"
+    E a mensagem deve ser "INDISPONÍVEL"
+
+  @index @index-service
+  Cenário: IDX-18 - IndexService calcular status de pedidos para consumidor
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo no status "composicao"
+    E que estou autenticado como consumidor
+    Quando eu calculo o status da etapa "pedidos" para o consumidor
+    Então o status deve ser "ativo"
+    E a mensagem deve ser "DISPONÍVEL"
+
+  @index @index-service
+  Cenário: IDX-19 - IndexService calcular status de entrega para fornecedor
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo no status "atribuicao"
+    E que estou autenticado como fornecedor
+    Quando eu calculo o status da etapa "entrega" para o fornecedor
+    Então o status deve ser "ativo"
+    E a mensagem deve ser "DISPONÍVEL"
+
+  @index @index-service
+  Cenário: IDX-20 - IndexService calcular status de retirada para consumidor
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo no status "composicao"
+    E que estou autenticado como consumidor
+    Quando eu calculo o status da etapa "retirada" para o consumidor
+    Então o status deve ser "ativo"
+    E a mensagem deve ser "DISPONÍVEL"
+
+  @index @index-service
+  Cenário: IDX-21 - IndexService validar acesso sem perfil
+    Dado que existem usuários cadastrados no sistema
+    E que existe um ponto de entrega cadastrado
+    E que existe um ciclo ativo
+    Quando eu calculo o status da etapa "oferta" sem informar perfil
+    Então o status deve ser "inativo"
+    E a mensagem deve ser "INDISPONÍVEL"
+
+  @index @index-service
+  Cenário: IDX-22 - IndexService buscar ciclos quando não há ciclos
+    Quando eu solicito os ciclos ativos
+    Então eu devo receber uma lista vazia
