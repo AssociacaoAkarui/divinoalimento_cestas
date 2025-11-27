@@ -547,5 +547,28 @@
       border-width: 0;
     }
   </style>
+
+  <!-- Services -->
+  <script src="/js/services/api.service.js"></script>
+  <script src="/js/services/index.service.js"></script>
+  <script src="/js/utils/feedback.js"></script>
+
+  <script>
+    // Configuração global
+    const usuarioId = <%= usuarioAtivo.id || 'null' %>;
+    const usuarioPerfil = '<%= usuarioAtivo.perfil || '' %>';
+
+    // Inicializar data-attributes nos cards
+    document.addEventListener('DOMContentLoaded', () => {
+      IndexService.inicializarDataAttributes();
+
+      // Atualizar status em tempo real via AJAX
+      if (usuarioId && usuarioPerfil) {
+        IndexService.atualizarCardsEtapas(usuarioId, usuarioPerfil)
+          .then(() => console.log('Cards atualizados com sucesso'))
+          .catch(error => console.error('Erro ao atualizar cards:', error));
+      }
+    });
+  </script>
 </body>
 </html>
