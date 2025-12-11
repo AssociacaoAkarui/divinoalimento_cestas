@@ -1,16 +1,25 @@
-# Plataforma do Divino Alimento
+# Plataforma do Divino Alimento - versão 1 
 
-![image](https://github.com/user-attachments/assets/5a3a8afb-111c-416c-a4fe-31af7911ef65)
+A plataforma do Divino Alimento facilita o fluxo de informação de vendas alimentos produzido por diversos agricultores e agricultoras, para diversos compradores e compradoras, por meio do ciclos de entrega de alimentos.
 
-A plataforma do Divino Alimento facilita o fluxo de informação de vendas alimentos produzido por diversos agricultores, para diversos compradores por meio de ciclos de entrega de cestas e lista extra de produtos para o varejo.
+Uma plataforma criada em 2021 a luz iniciativa do Divino Alimento, que é contada com mais detalhes no site da [Akarui](https://www.akarui.org.br/divinoalimento) que acontece em São Luiz do Paraitinga, SP, em diálogo entre consumidores e agricultores e agricultoras ligados à Associação Minhoca.
 
-Uma plataforma criada a luz iniciativa do Divino Alimento, que é contada com mais detalhes no site da [Akarui](https://www.akarui.org.br/divinoalimento).
+Sua primeira versão foi desenvolvida por Carmen Freitas (Desenvolvedora) em diálogo com Juliana Farinaci (Comunicação da Akarui) Em 2025, se somam mais pessoas ao processo que culmina na [versão 2](https://github.com/AssociacaoAkarui/DivinoAlimento/tree/main) e na atualização dessa versão cujo código está aqui nesse repositório. 
 
-Hoje apoiada pela chamada do [Mover-se na web](https://moverse.ceweb.br/), com os objetivos de deixar a ferramenta em código livre e compartilhado e a aproximação de mais coletivos para uso da ferramenta por meio do trabalho de articulação local e regional.
+São Alejandro González (Lider Técnico) e Nádia Coelho Pontes (Desenvolvedora), Ana Laura Carrilli (Extensionista), Damaris Chaves (Administrativo da Akarui), Daniela Coura (Extensionista), Allan Carlos (Design de Interface), Leonardo Ávila (Pesquisador em Design) e Sofia Kraja (Financeiro da Akarui).
 
-O [programa atual](https://divinoalimento.herokuapp.com/) foi desenvolvido por Carmen Freitas em diálogo com Juliana Farinaci e se somam mais pessoas ao processo na fase atual, ligadas a [Tekoporã](https://tekopora.top/), Alejandro González, Alejandro Ayala e Nádia Coelho Pontes e a [Akarui](https://www.akarui.org.br/), Ana Laura Carrilli, Damaris Chaves, Daniela Coura e Sofia Kraja.
+---
+### Site com a documentação da plataforma
 
-Para utilizar esse programa precisamos clonar o repositório em um lugar do computador de seu conhecimento. Para tanto sugerimos o uso do terminal, e utilizamos o código abaixo.
+https://docsdivinoalimento.tekopora.top/
+
+---
+
+## Passo a passo para instalar a plataforma versão 1 em seu computador
+
+1. Clonar o repositório em um lugar do computador de seu conhecimento. 
+
+2. No terminal, utilizar o código abaixo:
 
 `git clone https://github.com/AssociacaoAkarui/DivinoAlimento.git`
 
