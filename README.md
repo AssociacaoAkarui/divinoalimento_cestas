@@ -1,4 +1,4 @@
-# Plataforma do Divino Alimento - versão 1 
+# Plataforma do Divino Alimento - versão 1 - cestas
 
 A plataforma do Divino Alimento facilita o fluxo de informação de vendas alimentos produzido por diversos agricultores e agricultoras, para diversos compradores e compradoras, por meio do ciclos de entrega de alimentos para venda de **cestas**.
 
@@ -21,7 +21,7 @@ Clonar o repositório em um lugar do computador de seu conhecimento.
 
 No terminal, utilizar o código abaixo:
 
-`git clone https://github.com/AssociacaoAkarui/DivinoAlimento.git`
+`git clone https://github.com/AssociacaoAkarui/divinoalimento_cestas.git`
 
 Entrar na pasta que foi criada, utilizando o comando cd 
 
@@ -31,7 +31,7 @@ Copiar o arquivo com nome "env.example" para a pasta oculta com nome .env. Nesse
 
 `cp env.example .env`
 
-Nesse arquivo, a porta padrão é 13000 e pode ser alterada na [linha](https://github.com/AssociacaoAkarui/DivinoAlimento/blob/main/env.example#L7) 
+Nesse arquivo, a porta padrão é 13000 e pode ser alterada
 
 Vamos ao *rake*, para poder ligar ou desligar o docker que contém o programa do Divino Alimento. Para conhecer os comandos, utilize:
 
