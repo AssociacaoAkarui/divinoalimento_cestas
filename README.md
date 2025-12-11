@@ -1,6 +1,6 @@
 # Plataforma do Divino Alimento - versão 1 
 
-A plataforma do Divino Alimento facilita o fluxo de informação de vendas alimentos produzido por diversos agricultores e agricultoras, para diversos compradores e compradoras, por meio do ciclos de entrega de alimentos.
+A plataforma do Divino Alimento facilita o fluxo de informação de vendas alimentos produzido por diversos agricultores e agricultoras, para diversos compradores e compradoras, por meio do ciclos de entrega de alimentos para venda de **cestas**.
 
 Uma plataforma criada em 2021 a luz iniciativa do Divino Alimento, que é contada com mais detalhes no site da [Akarui](https://www.akarui.org.br/divinoalimento) que acontece em São Luiz do Paraitinga, SP, em diálogo entre consumidores e agricultores e agricultoras ligados à Associação Minhoca.
 
@@ -17,9 +17,9 @@ https://docsdivinoalimento.tekopora.top/
 
 ## Passo a passo para instalar a plataforma versão 1 em seu computador
 
-1. Clonar o repositório em um lugar do computador de seu conhecimento. 
+Clonar o repositório em um lugar do computador de seu conhecimento. 
 
-2. No terminal, utilizar o código abaixo:
+No terminal, utilizar o código abaixo:
 
 `git clone https://github.com/AssociacaoAkarui/DivinoAlimento.git`
 
